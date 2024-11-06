@@ -2,7 +2,7 @@
 
 syntax = "proto3";
 
-package protocol;
+package network;
 
 // Specify the Go package for generated code
 option go_package = "github.com/webbelito/Fenrir/internal/network;network";

@@ -7,7 +7,6 @@ import (
 	"net"
 	"time"
 
-	"github.com/webbelito/Fenrir/internal/network/protocol"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -45,7 +44,7 @@ func (u *UDPNetworkManager) Start() error {
 	return nil
 }
 
-func (u *UDPNetworkManager) Send(packet *protocol.Packet, addr *net.UDPAddr) error {
+func (u *UDPNetworkManager) Send(packet *Packet, addr *net.UDPAddr) error {
 
 	// Marshal the packet
 	data, err := proto.Marshal(packet)
@@ -62,13 +61,13 @@ func (u *UDPNetworkManager) Send(packet *protocol.Packet, addr *net.UDPAddr) err
 	return nil
 }
 
-func (u *UDPNetworkManager) Receive() (*protocol.Packet, *net.UDPAddr, error) {
+func (u *UDPNetworkManager) Receive() (*Packet, *net.UDPAddr, error) {
 
 	// Create a buffer to read the packet into
 	buffer := make([]byte, MAX_PACKET_SIZE)
 
 	// Set a deadline for reading
-	n.conn.SetReadDeadline(time.Now().Add(time.Second)) // 1-Second timemout
+	u.conn.SetReadDeadline(time.Now().Add(time.Second)) // 1-Second timemout
 
 	// Read the packet
 	bytes, addr, err := u.conn.ReadFromUDP(buffer)
@@ -77,7 +76,7 @@ func (u *UDPNetworkManager) Receive() (*protocol.Packet, *net.UDPAddr, error) {
 	}
 
 	// Unmarshal the packet
-	packet := &protocol.Packet{}
+	packet := &Packet{}
 
 	err = proto.Unmarshal(buffer[:bytes], packet)
 	if err != nil {
