@@ -33,6 +33,12 @@ func main() {
 			continue
 		}
 
+		// Handle ACK packets
+		if packet.Type == network.PacketType_ACK {
+			networkManager.HandleACK(packet)
+			continue
+		}
+
 		// Process the packet based on the packet type
 		switch packet.Type {
 		case network.PacketType_JOIN:
@@ -53,7 +59,8 @@ func main() {
 
 			// Create WelcomeResponse packet
 			welcomePacket := &network.Packet{
-				Type: network.PacketType_WELCOME,
+				Type:        network.PacketType_WELCOME,
+				Reliability: network.Reliability_RELIABLE,
 				Payload: &network.Packet_WelcomeResponse{
 					WelcomeResponse: welcomeResp,
 				},

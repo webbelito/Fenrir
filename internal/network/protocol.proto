@@ -9,8 +9,16 @@ option go_package = "github.com/webbelito/Fenrir/internal/network;network";
 
 // Enum for packet types
 enum PacketType {
-    JOIN = 0;
-    WELCOME = 1;
+    UNKNOWN = 0;
+    JOIN = 1;
+    WELCOME = 2;
+    ACK = 3;
+}
+
+// Enum for reliability
+enum Reliability {
+    UNRELIABLE = 0;
+    RELIABLE = 1;
 }
 
 // Message for Join Request
@@ -24,11 +32,19 @@ message WelcomeResponse {
     string message = 2;
 }
 
+// Message for ACK
+message Ack {
+    uint64 message_id = 1;
+}
+
 // Wrapper message for different payloads
 message Packet {
     PacketType type = 1;
+    Reliability reliability = 2;
+    uint64 message_id = 3;
     oneof payload {
-        JoinRequest join_request = 2;
-        WelcomeResponse welcome_response = 3;
+        JoinRequest join_request = 4;
+        WelcomeResponse welcome_response = 5;
+        Ack ack = 6;
     }
 }

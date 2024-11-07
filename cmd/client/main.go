@@ -81,6 +81,12 @@ func main() {
 				continue
 			}
 
+			// Handle ACK packets
+			if packet.Type == network.PacketType_ACK {
+				udpNetworkManager.HandleACK(packet)
+				continue
+			}
+
 			// Check if the packet is from the server
 			if addr.String() != serverAddr.String() {
 				utils.WarnLogger.Printf("Received packet from unexpected address: %s", addr.String())
@@ -99,6 +105,26 @@ func main() {
 				welcomeMessage = welcomeResp.Message
 
 				utils.InfoLogger.Printf("Received WelcomeResponse: %s", welcomeMessage)
+
+				// Send ACK for the WelcomeResponse
+				ackPacket := &network.Packet{
+					Type:        network.PacketType_ACK,
+					Reliability: network.Reliability_UNRELIABLE,
+					MessageId:   packet.MessageId,
+					Payload: &network.Packet_Ack{
+						Ack: &network.Ack{
+							MessageId: packet.MessageId,
+						},
+					},
+				}
+
+				// Send the ACK packet
+				err = udpNetworkManager.Send(ackPacket)
+				if err != nil {
+					utils.ErrorLogger.Printf("Failed to send ACK packet: %s", err)
+				} else {
+					utils.InfoLogger.Printf("Sent ACK for message ID %d", packet.MessageId)
+				}
 
 				done <- true
 
