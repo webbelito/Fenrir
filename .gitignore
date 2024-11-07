@@ -5,6 +5,10 @@
 *.exe
 *.exe~
 *.dll
+
+# Except for raylib.dll which is provided by raylib
+!raylib.dll
+
 *.so
 *.dylib
 

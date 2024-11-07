@@ -11,8 +11,8 @@ import (
 )
 
 type UDPNetworkManager struct {
-	conn *net.UDPConn
-	quit chan bool
+	Conn *net.UDPConn
+	Quit chan bool
 }
 
 const (
@@ -34,8 +34,8 @@ func NewUDPNetworkManager(port int) (*UDPNetworkManager, error) {
 	}
 
 	return &UDPNetworkManager{
-		conn: conn,
-		quit: make(chan bool),
+		Conn: conn,
+		Quit: make(chan bool),
 	}, nil
 }
 
@@ -44,7 +44,8 @@ func (u *UDPNetworkManager) Start() error {
 	return nil
 }
 
-func (u *UDPNetworkManager) Send(packet *Packet, addr *net.UDPAddr) error {
+// Applicable for clients
+func (u *UDPNetworkManager) Send(packet *Packet) error {
 
 	// Marshal the packet
 	data, err := proto.Marshal(packet)
@@ -53,7 +54,25 @@ func (u *UDPNetworkManager) Send(packet *Packet, addr *net.UDPAddr) error {
 	}
 
 	// Send the packet
-	_, err = u.conn.WriteToUDP(data, addr)
+	_, err = u.Conn.Write(data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Applicable for servers
+func (u *UDPNetworkManager) SendTo(packet *Packet, addr *net.UDPAddr) error {
+
+	// Marshal the packet
+	data, err := proto.Marshal(packet)
+	if err != nil {
+		return err
+	}
+
+	// Send the packet
+	_, err = u.Conn.WriteToUDP(data, addr)
 	if err != nil {
 		return err
 	}
@@ -67,10 +86,10 @@ func (u *UDPNetworkManager) Receive() (*Packet, *net.UDPAddr, error) {
 	buffer := make([]byte, MAX_PACKET_SIZE)
 
 	// Set a deadline for reading
-	u.conn.SetReadDeadline(time.Now().Add(time.Second)) // 1-Second timemout
+	u.Conn.SetReadDeadline(time.Now().Add(time.Second)) // 1-Second timemout
 
 	// Read the packet
-	bytes, addr, err := u.conn.ReadFromUDP(buffer)
+	bytes, addr, err := u.Conn.ReadFromUDP(buffer)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -88,6 +107,6 @@ func (u *UDPNetworkManager) Receive() (*Packet, *net.UDPAddr, error) {
 }
 
 func (u *UDPNetworkManager) Stop() error {
-	close(u.quit)
-	return u.conn.Close()
+	close(u.Quit)
+	return u.Conn.Close()
 }
