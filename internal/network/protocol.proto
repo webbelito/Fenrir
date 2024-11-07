@@ -13,6 +13,7 @@ enum PacketType {
     JOIN = 1;
     WELCOME = 2;
     ACK = 3;
+    POSITION_UPDATE = 4;
 }
 
 // Enum for reliability
@@ -37,6 +38,13 @@ message Ack {
     uint64 message_id = 1;
 }
 
+// Message for Position Update
+message PositionUpdate {
+    uint32 player_id = 1;
+    float x = 2;
+    float y = 3;
+}
+
 // Wrapper message for different payloads
 message Packet {
     PacketType type = 1;
@@ -46,5 +54,6 @@ message Packet {
         JoinRequest join_request = 4;
         WelcomeResponse welcome_response = 5;
         Ack ack = 6;
+        PositionUpdate position_update = 7;
     }
 }

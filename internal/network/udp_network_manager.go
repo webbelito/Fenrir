@@ -57,6 +57,17 @@ func NewUDPNetworkManager(port int) (*UDPNetworkManager, error) {
 	}, nil
 }
 
+func NewUDPNetworkManagerWithConn(conn *net.UDPConn) *UDPNetworkManager {
+	return &UDPNetworkManager{
+		Conn:               conn,
+		Quit:               make(chan bool),
+		PendingMessages:    make(map[uint64]PendingMessage),
+		MessageIDGenerator: NewMessageIDGenerator(),
+		RetransmissionTTL:  time.Second * 5,
+		MaxRetries:         5,
+	}
+}
+
 func (u *UDPNetworkManager) Start() error {
 	go u.retransmissionLoop()
 
@@ -103,7 +114,6 @@ func (u *UDPNetworkManager) Send(packet *Packet) error {
 
 	// Add the packet to the pending messages
 	u.PendingMutex.Lock()
-	defer u.PendingMutex.Unlock()
 
 	u.PendingMessages[packet.MessageId] = PendingMessage{
 		packet:   packet,
@@ -111,6 +121,8 @@ func (u *UDPNetworkManager) Send(packet *Packet) error {
 		retries:  0,
 		lastSent: time.Now(),
 	}
+
+	u.PendingMutex.Unlock()
 
 	return nil
 }
