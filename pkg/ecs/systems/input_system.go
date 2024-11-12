@@ -3,17 +3,50 @@ package systems
 import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
-type InputSystem struct{}
+type InputSystem struct {
+	entitiesManager   *ecs.EntitiesManager
+	componentsManager *ecs.ComponentsManager
+}
 
 func (is *InputSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
 
-	// Example for single player entity
-	playerEntity := ecs.Entity(1)
+	if em == nil || cm == nil {
+		utils.ErrorLogger.Println("InputSystem: EntitiesManager or ComponentsManager is nil")
+		return
+	}
+
+	// Assign the entities and components manager to the system
+	is.entitiesManager = em
+	is.componentsManager = cm
+
+	// Handle player movement input
+	is.handlePlayerMovementInput()
+
+}
+
+func (is *InputSystem) handlePlayerMovementInput() {
+
+	// Get all the player components
+	playerComps, playerCompsExists := is.componentsManager.Components[ecs.PlayerComponent]
+
+	if !playerCompsExists {
+		utils.ErrorLogger.Println("InputSystem: No player components found")
+		return
+	}
+
+	var playerEntity ecs.Entity
+
+	// Get the first player component from playerComps
+	for player := range playerComps {
+		playerEntity = player
+		break
+	}
 
 	// Get the velocity component for the player entity
-	velocityComp, velExists := cm.Components[ecs.VelocityComponent][playerEntity].(*ecs.Velocity)
+	velocityComp, velExists := is.componentsManager.Components[ecs.VelocityComponent][playerEntity].(*ecs.Velocity)
 
 	if !velExists {
 		return
