@@ -19,3 +19,7 @@ type Color struct {
 type Speed struct {
 	Value float32
 }
+
+type Player struct {
+	Name string
+}

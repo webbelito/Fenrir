@@ -41,7 +41,7 @@ func (e *Editor) Update() {
 	}
 }
 
-func (e *Editor) Draw() {
+func (e *Editor) Draw(pmd *graphics.PerformanceMonitorData) {
 	if e.Visible {
 
 		// Draw a semi-transparent background
@@ -61,7 +61,7 @@ func (e *Editor) Draw() {
 		e.WorldInspector.Draw()
 
 		// Draw the Performance Monitor
-		e.PerformanceMonitor.Draw()
+		e.PerformanceMonitor.Draw(pmd)
 
 	}
 }

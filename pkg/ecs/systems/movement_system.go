@@ -13,6 +13,7 @@ func (ms *MovementSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Co
 	positionComps, posExist := cm.Components[ecs.PositionComponent]
 	veloComps, velExist := cm.Components[ecs.VelocityComponent]
 	SpeedComps, speedExist := cm.Components[ecs.SpeedComponent]
+	PlayerComps := cm.Components[ecs.PlayerComponent]
 
 	if !posExist || !velExist || !speedExist {
 		return
@@ -23,6 +24,7 @@ func (ms *MovementSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Co
 		position, posExists := positionComps[entity].(*ecs.Position)
 		velocity, velExists := vel.(*ecs.Velocity)
 		speed, speedExists := SpeedComps[entity].(*ecs.Speed)
+		_, playerExists := PlayerComps[entity].(*ecs.Player)
 
 		if !posExists || !velExists || !speedExists {
 			continue
@@ -35,13 +37,17 @@ func (ms *MovementSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Co
 		deltaVelocity := raylib.Vector2Scale(normalizedVelocity, speed.Value*float32(dt))
 		position.Vector = raylib.Vector2Add(position.Vector, deltaVelocity)
 
-		// Define the screen bounds
-		screenWidth := float32(raylib.GetScreenWidth())
-		screenHeight := float32(raylib.GetScreenHeight())
+		if playerExists {
 
-		// Clamp the position to the screen bounds
-		position.Vector.X = raylib.Clamp(position.Vector.X, 0, screenWidth)
-		position.Vector.Y = raylib.Clamp(position.Vector.Y, 0, screenHeight)
+			// Define the screen bounds
+			screenWidth := float32(raylib.GetScreenWidth())
+			screenHeight := float32(raylib.GetScreenHeight())
+
+			// Clamp the position to the screen bounds
+			position.Vector.X = raylib.Clamp(position.Vector.X, 0, screenWidth-5)
+			position.Vector.Y = raylib.Clamp(position.Vector.Y, 0, screenHeight-5)
+
+		}
 
 	}
 }

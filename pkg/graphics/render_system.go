@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"github.com/webbelito/Fenrir/pkg/ecs"
-	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
@@ -58,7 +57,6 @@ func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManage
 
 		// Check if the entity is within the screen bounds
 		if !raylib.CheckCollisionPointRec(posComp.Vector, rs.ScreenCullingRect) {
-			utils.InfoLogger.Println("Entity is outside of screen bounds: screenBounds: ", rs.ScreenCullingRect, " entity position: ", posComp.Vector)
 			continue
 		}
 
@@ -77,7 +75,7 @@ func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManage
 
 	// Render entities
 	for _, entity := range rs.Entities {
-		raylib.DrawCircleV(entity.Vector, 10, entity.Color)
+		raylib.DrawRectangleV(entity.Vector, raylib.NewVector2(5, 5), entity.Color)
 	}
 
 }

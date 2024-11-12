@@ -9,6 +9,7 @@ const (
 	VelocityComponent
 	ColorComponent
 	SpeedComponent
+	PlayerComponent
 )
 
 // Generic component interface
