@@ -7,6 +7,8 @@ type ComponentType uint64
 const (
 	PositionComponent ComponentType = iota
 	VelocityComponent
+	ColorComponent
+	SpeedComponent
 )
 
 // Generic component interface

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/ecs/systems"
 	"github.com/webbelito/Fenrir/pkg/editor"
 	"github.com/webbelito/Fenrir/pkg/graphics"
 
@@ -14,17 +15,22 @@ func main() {
 	rl.InitWindow(1920, 1280, "Fenrir Test")
 	defer rl.CloseWindow()
 
-	rl.SetTargetFPS(60)
+	rl.SetTargetFPS(0)
+
+	renderSystem := graphics.NewRenderSystem(rl.Rectangle{X: 0, Y: 0, Width: float32(rl.GetScreenWidth()), Height: float32(rl.GetScreenHeight())})
 
 	// Initialize ECS Manager
 	ecsManager := ecs.NewECSManager()
-	ecsManager.AddSystem(&ecs.MovementSystem{}, 1)
-	ecsManager.AddSystem(&graphics.RenderSystem{}, 2)
+	ecsManager.AddSystem(&systems.InputSystem{}, 0)
+	ecsManager.AddSystem(&systems.MovementSystem{}, 1)
+	ecsManager.AddSystem(renderSystem, 2)
 
 	// Create a player entity
 	player := ecsManager.CreateEntity()
 	ecsManager.AddComponent(player, ecs.PositionComponent, &ecs.Position{Vector: rl.NewVector2(100, 100)})
-	ecsManager.AddComponent(player, ecs.VelocityComponent, &ecs.Velocity{Vector: rl.NewVector2(1, 1)})
+	ecsManager.AddComponent(player, ecs.VelocityComponent, &ecs.Velocity{Vector: rl.NewVector2(0, 0)})
+	ecsManager.AddComponent(player, ecs.ColorComponent, &ecs.Color{Color: rl.Red})
+	ecsManager.AddComponent(player, ecs.SpeedComponent, &ecs.Speed{Value: 200})
 
 	// Initialize the Editor
 	gameEditor := editor.NewEditor(ecsManager)
@@ -37,9 +43,6 @@ func main() {
 		// Handle editor input
 		handleEditorInput(gameEditor)
 
-		// Handle input
-		handleGameInput(ecsManager, player)
-
 		// Handle spawner input
 		handleSpawnerInput(ecsManager)
 
@@ -48,36 +51,17 @@ func main() {
 
 		// Begin drawing
 		rl.BeginDrawing()
+		rl.ClearBackground(rl.Black)
+
+		// Render ECS systems
+		ecsManager.Render()
 
 		// Render Editor Overlay
 		gameEditor.Draw()
 
-		// Clear screen
-		rl.ClearBackground(rl.Black)
-
 		// End drawing
 		rl.EndDrawing()
 
-	}
-}
-
-// TODO: Refactor to a InputSystem
-func handleGameInput(ecsManager *ecs.ECSManager, player ecs.Entity) {
-	if rl.IsKeyDown(rl.KeyW) {
-		velocity := ecsManager.GetComponent(player, ecs.VelocityComponent).(*ecs.Velocity)
-		velocity.Vector.Y -= 1
-	}
-	if rl.IsKeyDown(rl.KeyS) {
-		velocity := ecsManager.GetComponent(player, ecs.VelocityComponent).(*ecs.Velocity)
-		velocity.Vector.Y += 1
-	}
-	if rl.IsKeyDown(rl.KeyA) {
-		velocity := ecsManager.GetComponent(player, ecs.VelocityComponent).(*ecs.Velocity)
-		velocity.Vector.X -= 1
-	}
-	if rl.IsKeyDown(rl.KeyD) {
-		velocity := ecsManager.GetComponent(player, ecs.VelocityComponent).(*ecs.Velocity)
-		velocity.Vector.X += 1
 	}
 }
 
@@ -89,14 +73,36 @@ func handleEditorInput(editor *editor.Editor) {
 
 func handleSpawnerInput(ecsManager *ecs.ECSManager) {
 
+	// Create a slice of raylib colors
+	colors := []rl.Color{
+		rl.Blue,
+		rl.Green,
+		rl.Purple,
+		rl.Orange,
+		rl.Pink,
+		rl.Yellow,
+		rl.SkyBlue,
+		rl.Lime,
+		rl.Gold,
+		rl.Violet,
+		rl.Brown,
+		rl.LightGray,
+		rl.DarkGray,
+	}
+
 	if rl.IsKeyPressed(rl.KeySpace) {
 
-		for i := 0; i < 100; i++ {
+		// SPAWN 100 ENTITIES
+		// Select a random color from the colors slice
+
+		for i := 0; i < 450; i++ {
+
+			color := colors[rl.GetRandomValue(0, int32(len(colors)-1))]
 
 			entity := ecsManager.CreateEntity()
-			ecsManager.AddComponent(entity, ecs.PositionComponent, &ecs.Position{Vector: rl.NewVector2(float32(rl.GetRandomValue(0, 1920)), float32(rl.GetRandomValue(0, 1280)))})
+			ecsManager.AddComponent(entity, ecs.PositionComponent, &ecs.Position{Vector: rl.NewVector2(float32(rl.GetRandomValue(0, int32(rl.GetScreenWidth())-1)), float32(rl.GetRandomValue(0, int32(rl.GetScreenHeight())-1)))})
 			ecsManager.AddComponent(entity, ecs.VelocityComponent, &ecs.Velocity{Vector: rl.NewVector2(0, 0)})
-
+			ecsManager.AddComponent(entity, ecs.ColorComponent, &ecs.Color{Color: color})
 		}
 	}
 }

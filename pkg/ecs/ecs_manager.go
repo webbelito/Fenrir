@@ -46,3 +46,7 @@ func (em *ECSManager) AddSystem(system System, priority int) {
 func (em *ECSManager) Update(dt float64) {
 	em.systemsManager.Update(dt, em.entitiesManager, em.componentsManager)
 }
+
+func (em *ECSManager) Render() {
+	em.systemsManager.Render(em.entitiesManager, em.componentsManager)
+}

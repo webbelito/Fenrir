@@ -11,3 +11,11 @@ type Position struct {
 type Velocity struct {
 	Vector Raylib.Vector2
 }
+
+type Color struct {
+	Color Raylib.Color
+}
+
+type Speed struct {
+	Value float32
+}
