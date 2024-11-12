@@ -4,6 +4,7 @@ import (
 	"sort"
 
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
@@ -12,6 +13,8 @@ import (
 type RenderSystem struct {
 	ScreenCullingRect raylib.Rectangle
 	Entities          []EntityData
+	entitiesManager   *ecs.EntitiesManager
+	componentsManager *ecs.ComponentsManager
 }
 
 type EntityData struct {
@@ -32,12 +35,25 @@ func (rs *RenderSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Comp
 }
 
 func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
+	if em == nil || cm == nil {
+		utils.ErrorLogger.Println("RenderSystem: EntitiesManager or ComponentsManager is nil")
+		return
+	}
 
+	// Assign the entities and components manager to the system
+	rs.entitiesManager = em
+	rs.componentsManager = cm
+
+	rs.RenderEntities()
+
+}
+
+func (rs *RenderSystem) RenderEntities() {
 	// Get all entities with a position component
-	allPositionsComp, allPosExists := cm.Components[ecs.PositionComponent]
+	allPositionsComp, allPosExists := rs.componentsManager.Components[ecs.PositionComponent]
 
 	// Get all entities with a color component
-	allColorsComp, allColExists := cm.Components[ecs.ColorComponent]
+	allColorsComp, allColExists := rs.componentsManager.Components[ecs.ColorComponent]
 
 	if !allPosExists && !allColExists {
 		return
@@ -77,5 +93,4 @@ func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManage
 	for _, entity := range rs.Entities {
 		raylib.DrawRectangleV(entity.Vector, raylib.NewVector2(5, 5), entity.Color)
 	}
-
 }
