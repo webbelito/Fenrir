@@ -23,6 +23,14 @@ func (em *ECSManager) DestroyEntity(entity Entity) {
 	em.componentsManager.DestroyEntityComponents(entity)
 }
 
+func (em *ECSManager) GetAllEntities() []Entity {
+	return em.entitiesManager.GetAllEntities()
+}
+
+func (em *ECSManager) GetEntityCount() int {
+	return em.entitiesManager.GetEntityCount()
+}
+
 func (em *ECSManager) AddComponent(entity Entity, ct ComponentType, c Component) {
 	em.componentsManager.AddComponent(entity, ct, c)
 }

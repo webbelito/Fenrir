@@ -25,3 +25,17 @@ func (em *EntitiesManager) CreateEntity() Entity {
 func (em *EntitiesManager) DestroyEntity(entity Entity) {
 	delete(em.entites, entity)
 }
+
+func (em *EntitiesManager) GetAllEntities() []Entity {
+	var entities []Entity
+
+	for entity := range em.entites {
+		entities = append(entities, entity)
+	}
+
+	return entities
+}
+
+func (em *EntitiesManager) GetEntityCount() int {
+	return len(em.entites)
+}

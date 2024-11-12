@@ -3,7 +3,7 @@ package graphics
 import (
 	"github.com/webbelito/Fenrir/pkg/ecs"
 
-	rl "github.com/gen2brain/raylib-go/raylib"
+	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
 // Render System is responsible for rendering entities
@@ -24,6 +24,6 @@ func (rs *RenderSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Comp
 			continue
 		}
 
-		rl.DrawCircleV(position.Vector, 10, rl.Red)
+		raylib.DrawCircleV(position.Vector, 10, raylib.Red)
 	}
 }
