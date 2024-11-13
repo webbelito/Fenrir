@@ -2,7 +2,6 @@ package editor
 
 import (
 	"github.com/webbelito/Fenrir/pkg/ecs"
-	"github.com/webbelito/Fenrir/pkg/graphics"
 
 	raygui "github.com/gen2brain/raylib-go/raygui"
 	raylib "github.com/gen2brain/raylib-go/raylib"
@@ -10,8 +9,8 @@ import (
 
 type Editor struct {
 	Visible            bool
-	WorldInspector     *graphics.WorldInspector
-	PerformanceMonitor *graphics.PerformanceMonitor
+	WorldInspector     *WorldInspector
+	PerformanceMonitor *PerformanceMonitor
 }
 
 var (
@@ -25,8 +24,8 @@ func NewEditor(world *ecs.ECSManager) *Editor {
 
 	return &Editor{
 		Visible:            false,
-		WorldInspector:     graphics.NewWorldInstructor(wiPosition, world),
-		PerformanceMonitor: graphics.NewPerformanceMonitor(pmPosition),
+		WorldInspector:     NewWorldInstructor(wiPosition, world),
+		PerformanceMonitor: NewPerformanceMonitor(pmPosition),
 	}
 }
 
@@ -41,18 +40,8 @@ func (e *Editor) Update() {
 	}
 }
 
-func (e *Editor) Draw(pmd *graphics.PerformanceMonitorData) {
+func (e *Editor) Draw(pmd *PerformanceMonitorData) {
 	if e.Visible {
-
-		// Draw a semi-transparent background
-		/*raygui.Panel(raylib.Rectangle{
-			X:      10,
-			Y:      10,
-			Width:  float32(raylib.GetScreenWidth()) - 20,
-			Height: float32(raylib.GetScreenHeight()) - 20,
-		},
-			"Fenrir Editor")
-		*/
 
 		// Here you can add more UI elements like buttons, text fields etc.
 		// For the World Inspector, we'll integrate it separately

@@ -6,7 +6,6 @@ import (
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/editor"
-	"github.com/webbelito/Fenrir/pkg/graphics"
 	"github.com/webbelito/Fenrir/pkg/systems"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
@@ -68,7 +67,7 @@ func main() {
 		totalDuration := time.Since(updateStart)
 
 		// Render Editor Overlay
-		gameEditor.Draw(&graphics.PerformanceMonitorData{FPS: rl.GetFPS(), UpdateDuration: updateDuration, RenderDuration: renderDuration, TotalDuration: totalDuration})
+		gameEditor.Draw(&editor.PerformanceMonitorData{FPS: rl.GetFPS(), UpdateDuration: updateDuration, RenderDuration: renderDuration, TotalDuration: totalDuration})
 
 		// End drawing
 		rl.EndDrawing()
