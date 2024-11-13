@@ -33,7 +33,7 @@ func main() {
 
 	ecsManager.AddSystem(&systems.MovementSystem{}, 1)
 
-	// TODO: Implement a camrea and follow the position of the camera with the screen culling rect
+	// TODO: Implement a camera and follow the position of the camera with the screen culling rect
 	ecsManager.AddSystem(&systems.RenderSystem{ScreenCullingRect: raylib.Rectangle{
 		X:      0,
 		Y:      0,
