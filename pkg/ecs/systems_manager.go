@@ -4,6 +4,7 @@ import (
 	"sort"
 )
 
+// Represents a system that can be rendered
 type RenderableSystem interface {
 	Render(*EntitiesManager, *ComponentsManager)
 }

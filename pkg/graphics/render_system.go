@@ -9,7 +9,6 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
-// Render System is responsible for rendering entities
 type RenderSystem struct {
 	ScreenCullingRect raylib.Rectangle
 	Entities          []EntityData
@@ -49,6 +48,7 @@ func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManage
 }
 
 func (rs *RenderSystem) RenderEntities() {
+
 	// Get all entities with a position component
 	allPositionsComp, allPosExists := rs.componentsManager.Components[ecs.PositionComponent]
 
