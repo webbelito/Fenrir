@@ -23,7 +23,12 @@ func main() {
 
 	// Initialize ECS Manager
 	ecsManager := ecs.NewECSManager()
-	ecsManager.AddSystem(&systems.InputSystem{}, 0)
+
+	// Initialize the Editor
+	gameEditor := editor.NewEditor(ecsManager)
+
+	// Add systems to the ECS Manager
+	ecsManager.AddSystem(&systems.InputSystem{Editor: gameEditor, EcsManager: ecsManager}, 0)
 	ecsManager.AddSystem(&systems.MovementSystem{}, 1)
 	ecsManager.AddSystem(renderSystem, 2)
 
@@ -35,19 +40,10 @@ func main() {
 	ecsManager.AddComponent(player, ecs.SpeedComponent, &components.Speed{Value: 200})
 	ecsManager.AddComponent(player, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
-	// Initialize the Editor
-	gameEditor := editor.NewEditor(ecsManager)
-
 	// Main game loop
 
 	for !rl.WindowShouldClose() {
 		deltaTime := rl.GetFrameTime()
-
-		// Handle editor input
-		handleEditorInput(gameEditor)
-
-		// Handle spawner input
-		handleSpawnerInput(ecsManager)
 
 		// Update ECS entities
 		updateStart := time.Now()
@@ -72,48 +68,5 @@ func main() {
 		// End drawing
 		rl.EndDrawing()
 
-	}
-}
-
-func handleEditorInput(editor *editor.Editor) {
-	if rl.IsKeyPressed(rl.KeyF1) {
-		editor.ToggleVisibility()
-	}
-}
-
-func handleSpawnerInput(ecsManager *ecs.ECSManager) {
-
-	// Create a slice of raylib colors
-	colors := []rl.Color{
-		rl.Blue,
-		rl.Green,
-		rl.Purple,
-		rl.Orange,
-		rl.Pink,
-		rl.Yellow,
-		rl.SkyBlue,
-		rl.Lime,
-		rl.Gold,
-		rl.Violet,
-		rl.Brown,
-		rl.LightGray,
-		rl.DarkGray,
-	}
-
-	if rl.IsKeyPressed(rl.KeySpace) {
-
-		// SPAWN 100 ENTITIES
-		// Select a random color from the colors slice
-
-		for i := 0; i < 450; i++ {
-
-			color := colors[rl.GetRandomValue(0, int32(len(colors)-1))]
-
-			entity := ecsManager.CreateEntity()
-			ecsManager.AddComponent(entity, ecs.PositionComponent, &components.Position{Vector: rl.NewVector2(float32(rl.GetRandomValue(0, int32(rl.GetScreenWidth())-1)), float32(rl.GetRandomValue(0, int32(rl.GetScreenHeight())-1)))})
-			ecsManager.AddComponent(entity, ecs.VelocityComponent, &components.Velocity{Vector: rl.NewVector2(float32(rl.GetRandomValue(-10, 10)), float32(rl.GetRandomValue(-10, 10)))})
-			ecsManager.AddComponent(entity, ecs.SpeedComponent, &components.Speed{Value: float32(rl.GetRandomValue(50, 200))})
-			ecsManager.AddComponent(entity, ecs.ColorComponent, &components.Color{Color: color})
-		}
 	}
 }
