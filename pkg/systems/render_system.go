@@ -30,10 +30,6 @@ func NewRenderSystem(screenBounds raylib.Rectangle) *RenderSystem {
 	}
 }
 
-func (rs *RenderSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
-	// Currently the render systems doesn't update anything except rendering
-}
-
 func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
 	if em == nil || cm == nil {
 		utils.ErrorLogger.Println("RenderSystem: EntitiesManager or ComponentsManager is nil")
@@ -46,6 +42,11 @@ func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManage
 
 	rs.RenderEntities()
 
+}
+
+// TODO: Refactor this to not require an update method
+func (rs *RenderSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
+	// Do nothing
 }
 
 func (rs *RenderSystem) RenderEntities() {

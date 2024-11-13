@@ -8,18 +8,16 @@ import (
 	"github.com/webbelito/Fenrir/pkg/editor"
 	"github.com/webbelito/Fenrir/pkg/systems"
 
-	rl "github.com/gen2brain/raylib-go/raylib"
+	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
 func main() {
 
 	// Initialize Raylib
-	rl.InitWindow(1920, 1280, "Fenrir Test")
-	defer rl.CloseWindow()
+	raylib.InitWindow(1920, 1280, "Fenrir Test")
+	defer raylib.CloseWindow()
 
-	rl.SetTargetFPS(60)
-
-	renderSystem := systems.NewRenderSystem(rl.Rectangle{X: 0, Y: 0, Width: float32(rl.GetScreenWidth()), Height: float32(rl.GetScreenHeight())})
+	raylib.SetTargetFPS(60)
 
 	// Initialize ECS Manager
 	ecsManager := ecs.NewECSManager()
@@ -28,22 +26,36 @@ func main() {
 	gameEditor := editor.NewEditor(ecsManager)
 
 	// Add systems to the ECS Manager
-	ecsManager.AddSystem(&systems.InputSystem{Editor: gameEditor, EcsManager: ecsManager}, 0)
+	ecsManager.AddSystem(&systems.InputSystem{
+		Editor:     gameEditor,
+		EcsManager: ecsManager,
+	}, 0)
+
 	ecsManager.AddSystem(&systems.MovementSystem{}, 1)
-	ecsManager.AddSystem(renderSystem, 2)
+
+	// TODO: Implement a camrea and follow the position of the camera with the screen culling rect
+	ecsManager.AddSystem(&systems.RenderSystem{ScreenCullingRect: raylib.Rectangle{
+		X:      0,
+		Y:      0,
+		Width:  float32(raylib.GetScreenWidth()),
+		Height: float32(raylib.GetScreenHeight()),
+	}}, 2)
 
 	// Create a player entity
 	player := ecsManager.CreateEntity()
-	ecsManager.AddComponent(player, ecs.PositionComponent, &components.Position{Vector: rl.NewVector2(100, 100)})
-	ecsManager.AddComponent(player, ecs.VelocityComponent, &components.Velocity{Vector: rl.NewVector2(0, 0)})
-	ecsManager.AddComponent(player, ecs.ColorComponent, &components.Color{Color: rl.Red})
+
+	// Add components to the player entity
+	ecsManager.AddComponent(player, ecs.PositionComponent, &components.Position{Vector: raylib.NewVector2(100, 100)})
+	ecsManager.AddComponent(player, ecs.VelocityComponent, &components.Velocity{Vector: raylib.NewVector2(0, 0)})
+	ecsManager.AddComponent(player, ecs.ColorComponent, &components.Color{Color: raylib.Red})
 	ecsManager.AddComponent(player, ecs.SpeedComponent, &components.Speed{Value: 200})
 	ecsManager.AddComponent(player, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
 	// Main game loop
+	for !raylib.WindowShouldClose() {
 
-	for !rl.WindowShouldClose() {
-		deltaTime := rl.GetFrameTime()
+		// Get the time taken for the last frame
+		deltaTime := raylib.GetFrameTime()
 
 		// Update ECS entities
 		updateStart := time.Now()
@@ -51,8 +63,8 @@ func main() {
 		updateDuration := time.Since(updateStart)
 
 		// Begin drawing
-		rl.BeginDrawing()
-		rl.ClearBackground(rl.Black)
+		raylib.BeginDrawing()
+		raylib.ClearBackground(raylib.Black)
 
 		// Render ECS entities
 		renderStart := time.Now()
@@ -63,10 +75,10 @@ func main() {
 		totalDuration := time.Since(updateStart)
 
 		// Render Editor Overlay
-		gameEditor.Draw(&editor.PerformanceMonitorData{FPS: rl.GetFPS(), UpdateDuration: updateDuration, RenderDuration: renderDuration, TotalDuration: totalDuration})
+		gameEditor.Draw(&editor.PerformanceMonitorData{FPS: raylib.GetFPS(), UpdateDuration: updateDuration, RenderDuration: renderDuration, TotalDuration: totalDuration})
 
 		// End drawing
-		rl.EndDrawing()
+		raylib.EndDrawing()
 
 	}
 }

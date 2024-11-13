@@ -11,7 +11,6 @@ type System interface {
 
 // Represents a system that can be rendered
 type RenderableSystem interface {
-	Update(dt float64, em *EntitiesManager, cm *ComponentsManager)
 	Render(*EntitiesManager, *ComponentsManager)
 }
 
