@@ -3,10 +3,11 @@ package main
 import (
 	"time"
 
+	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
-	"github.com/webbelito/Fenrir/pkg/ecs/systems"
 	"github.com/webbelito/Fenrir/pkg/editor"
 	"github.com/webbelito/Fenrir/pkg/graphics"
+	"github.com/webbelito/Fenrir/pkg/systems"
 
 	rl "github.com/gen2brain/raylib-go/raylib"
 )
@@ -19,7 +20,7 @@ func main() {
 
 	rl.SetTargetFPS(60)
 
-	renderSystem := graphics.NewRenderSystem(rl.Rectangle{X: 0, Y: 0, Width: float32(rl.GetScreenWidth()), Height: float32(rl.GetScreenHeight())})
+	renderSystem := systems.NewRenderSystem(rl.Rectangle{X: 0, Y: 0, Width: float32(rl.GetScreenWidth()), Height: float32(rl.GetScreenHeight())})
 
 	// Initialize ECS Manager
 	ecsManager := ecs.NewECSManager()
@@ -29,11 +30,11 @@ func main() {
 
 	// Create a player entity
 	player := ecsManager.CreateEntity()
-	ecsManager.AddComponent(player, ecs.PositionComponent, &ecs.Position{Vector: rl.NewVector2(100, 100)})
-	ecsManager.AddComponent(player, ecs.VelocityComponent, &ecs.Velocity{Vector: rl.NewVector2(0, 0)})
-	ecsManager.AddComponent(player, ecs.ColorComponent, &ecs.Color{Color: rl.Red})
-	ecsManager.AddComponent(player, ecs.SpeedComponent, &ecs.Speed{Value: 200})
-	ecsManager.AddComponent(player, ecs.PlayerComponent, &ecs.Player{Name: "Webbelito"})
+	ecsManager.AddComponent(player, ecs.PositionComponent, &components.Position{Vector: rl.NewVector2(100, 100)})
+	ecsManager.AddComponent(player, ecs.VelocityComponent, &components.Velocity{Vector: rl.NewVector2(0, 0)})
+	ecsManager.AddComponent(player, ecs.ColorComponent, &components.Color{Color: rl.Red})
+	ecsManager.AddComponent(player, ecs.SpeedComponent, &components.Speed{Value: 200})
+	ecsManager.AddComponent(player, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
 	// Initialize the Editor
 	gameEditor := editor.NewEditor(ecsManager)
@@ -110,10 +111,10 @@ func handleSpawnerInput(ecsManager *ecs.ECSManager) {
 			color := colors[rl.GetRandomValue(0, int32(len(colors)-1))]
 
 			entity := ecsManager.CreateEntity()
-			ecsManager.AddComponent(entity, ecs.PositionComponent, &ecs.Position{Vector: rl.NewVector2(float32(rl.GetRandomValue(0, int32(rl.GetScreenWidth())-1)), float32(rl.GetRandomValue(0, int32(rl.GetScreenHeight())-1)))})
-			ecsManager.AddComponent(entity, ecs.VelocityComponent, &ecs.Velocity{Vector: rl.NewVector2(float32(rl.GetRandomValue(-10, 10)), float32(rl.GetRandomValue(-10, 10)))})
-			ecsManager.AddComponent(entity, ecs.SpeedComponent, &ecs.Speed{Value: float32(rl.GetRandomValue(50, 200))})
-			ecsManager.AddComponent(entity, ecs.ColorComponent, &ecs.Color{Color: color})
+			ecsManager.AddComponent(entity, ecs.PositionComponent, &components.Position{Vector: rl.NewVector2(float32(rl.GetRandomValue(0, int32(rl.GetScreenWidth())-1)), float32(rl.GetRandomValue(0, int32(rl.GetScreenHeight())-1)))})
+			ecsManager.AddComponent(entity, ecs.VelocityComponent, &components.Velocity{Vector: rl.NewVector2(float32(rl.GetRandomValue(-10, 10)), float32(rl.GetRandomValue(-10, 10)))})
+			ecsManager.AddComponent(entity, ecs.SpeedComponent, &components.Speed{Value: float32(rl.GetRandomValue(50, 200))})
+			ecsManager.AddComponent(entity, ecs.ColorComponent, &components.Color{Color: color})
 		}
 	}
 }

@@ -2,6 +2,7 @@ package systems
 
 import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
+	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/utils"
 )
@@ -45,10 +46,10 @@ func (ms *MovementSystem) MoveEntities(dt float64) {
 
 	// Update the position of all entities with a position, velocity and speed component
 	for entity, vel := range veloComps {
-		position, posExists := positionComps[entity].(*ecs.Position)
-		velocity, velExists := vel.(*ecs.Velocity)
-		speed, speedExists := SpeedComps[entity].(*ecs.Speed)
-		_, playerExists := PlayerComps[entity].(*ecs.Player)
+		position, posExists := positionComps[entity].(*components.Position)
+		velocity, velExists := vel.(*components.Velocity)
+		speed, speedExists := SpeedComps[entity].(*components.Speed)
+		_, playerExists := PlayerComps[entity].(*components.Player)
 
 		if !posExists || !velExists || !speedExists {
 			continue

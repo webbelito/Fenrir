@@ -4,8 +4,14 @@ import (
 	"sort"
 )
 
+// Represents a system that can be updated, standard interface for all systems
+type System interface {
+	Update(dt float64, em *EntitiesManager, cm *ComponentsManager)
+}
+
 // Represents a system that can be rendered
 type RenderableSystem interface {
+	Update(dt float64, em *EntitiesManager, cm *ComponentsManager)
 	Render(*EntitiesManager, *ComponentsManager)
 }
 

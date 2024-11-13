@@ -1,8 +1,9 @@
-package graphics
+package systems
 
 import (
 	"sort"
 
+	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
@@ -17,7 +18,7 @@ type RenderSystem struct {
 }
 
 type EntityData struct {
-	ID     ecs.Entity
+	ID     uint64
 	Vector raylib.Vector2
 	Color  raylib.Color
 }
@@ -64,8 +65,8 @@ func (rs *RenderSystem) RenderEntities() {
 
 	// Collect entites that have both Position and Color components
 	for entity, pos := range allPositionsComp {
-		posComp, posCompExists := pos.(*ecs.Position)
-		colorComp, colorCompExists := allColorsComp[entity].(*ecs.Color)
+		posComp, posCompExists := pos.(*components.Position)
+		colorComp, colorCompExists := allColorsComp[entity].(*components.Color)
 
 		if !posCompExists && !colorCompExists {
 			continue
@@ -76,8 +77,9 @@ func (rs *RenderSystem) RenderEntities() {
 			continue
 		}
 
+		// Add the entity to the slice
 		rs.Entities = append(rs.Entities, EntityData{
-			ID:     entity,
+			ID:     entity.ID,
 			Vector: posComp.Vector,
 			Color:  colorComp.Color,
 		})
@@ -85,8 +87,14 @@ func (rs *RenderSystem) RenderEntities() {
 	}
 
 	// Sort entites by ID to ensure consistent rendering order
-	sort.SliceStable(rs.Entities, func(i, j int) bool {
+	/*sort.SliceStable(rs.Entities, func(i, j int) bool {
 		return rs.Entities[i].ID < rs.Entities[j].ID
+	})
+	*/
+
+	// Sort entities by ID to ensure consistent rendering order
+	sort.SliceStable(rs.Entities, func(i int, j int) bool {
+		return rs.Entities[i].ID < rs.Entities[j].ID // Not sure if ID.ID is the best way to do this
 	})
 
 	// Render entities

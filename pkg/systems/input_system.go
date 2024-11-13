@@ -2,6 +2,7 @@ package systems
 
 import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
+	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/utils"
 )
@@ -37,7 +38,7 @@ func (is *InputSystem) handlePlayerMovementInput() {
 		return
 	}
 
-	var playerEntity ecs.Entity
+	playerEntity := &ecs.Entity{}
 
 	// Get the first player component from playerComps
 	for player := range playerComps {
@@ -46,7 +47,7 @@ func (is *InputSystem) handlePlayerMovementInput() {
 	}
 
 	// Get the velocity component for the player entity
-	velocityComp, velExists := is.componentsManager.Components[ecs.VelocityComponent][playerEntity].(*ecs.Velocity)
+	velocityComp, velExists := is.componentsManager.Components[ecs.VelocityComponent][playerEntity].(*components.Velocity)
 
 	if !velExists {
 		return
