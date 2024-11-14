@@ -41,16 +41,62 @@ func main() {
 		Height: float32(raylib.GetScreenHeight()),
 	}}, 2)
 
+	// Initialize the gravity vector (pixels per second i.e 980 pixels per second)
+	gravity := raylib.NewVector2(0, 980)
+
+	// Initialize the RigidBodySystem
+	rigidBodySystem := systems.NewRigidBodySystem(gravity)
+	ecsManager.AddSystem(rigidBodySystem, 3)
+
+	// Initialize the CollisionSystem
+	collisionSystem := systems.NewCollisionSystem()
+	ecsManager.AddSystem(collisionSystem, 4)
+
 	// Create a player entity
 	player := ecsManager.CreateEntity()
 
-	// Add components to the player entity
 	ecsManager.AddComponent(player, ecs.PositionComponent, &components.Position{Vector: raylib.NewVector2(100, 100)})
-	ecsManager.AddComponent(player, ecs.VelocityComponent, &components.Velocity{Vector: raylib.NewVector2(0, 0)})
 	ecsManager.AddComponent(player, ecs.ColorComponent, &components.Color{Color: raylib.Red})
-	ecsManager.AddComponent(player, ecs.SpeedComponent, &components.Speed{Value: 200})
+	ecsManager.AddComponent(player, ecs.SizeComponent, &components.Size{Size: raylib.NewVector2(5, 5)})
 	ecsManager.AddComponent(player, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
+	// Add RigidBody component to the player entity
+	ecsManager.AddComponent(player, ecs.RigidBodyComponent, &components.RigidBody{
+		Mass:         1,
+		Velocity:     raylib.NewVector2(0, 0),
+		Acceleration: raylib.NewVector2(0, 0),
+		Force:        raylib.NewVector2(0, 0),
+		Drag:         1,
+		Restitution:  0.5,
+		IsKinematic:  false,
+		IsStatic:     false,
+	})
+	ecsManager.AddComponent(player, ecs.BoxColliderComponent, &components.BoxCollider{
+		Type: "Square",
+		Size: raylib.NewVector2(5, 5),
+	})
+
+	// Create a random rigid body entity
+	rigidBodyEntity := ecsManager.CreateEntity()
+	ecsManager.AddComponent(rigidBodyEntity, ecs.PositionComponent, &components.Position{Vector: raylib.NewVector2(200, 200)})
+	ecsManager.AddComponent(rigidBodyEntity, ecs.ColorComponent, &components.Color{Color: raylib.Blue})
+	ecsManager.AddComponent(rigidBodyEntity, ecs.SizeComponent, &components.Size{Size: raylib.NewVector2(5, 5)})
+
+	ecsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &components.RigidBody{
+		Mass:         1,
+		Velocity:     raylib.NewVector2(0, 0),
+		Acceleration: raylib.NewVector2(0, 0),
+		Force:        raylib.NewVector2(0, 0),
+		Drag:         0.1,
+		Restitution:  0.5,
+		IsKinematic:  false,
+		IsStatic:     false,
+	})
+
+	ecsManager.AddComponent(rigidBodyEntity, ecs.BoxColliderComponent, &components.BoxCollider{
+		Type: "Square",
+		Size: raylib.NewVector2(5, 5),
+	})
 	// Main game loop
 	for !raylib.WindowShouldClose() {
 

@@ -27,16 +27,21 @@ func (is *InputSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Compo
 	is.componentsManager = cm
 
 	// Handle player movement input
-	is.handlePlayerMovementInput()
+	//is.handlePlayerMovementInput()
+	is.handlePlayerMovmentInput()
 
 	// Handle editor input
 	is.handleEditorInput()
 
 	// Handle spawner input
 	is.handleSpawnerInput()
+
+	// Handle rigid body spawner
+	is.handleRigidBodySpawner()
 }
 
-func (is *InputSystem) handlePlayerMovementInput() {
+/*
+func (is *InputSystem) handlePlayerMovementInputOld() {
 
 	// Get all the player components
 	playerComps, playerCompsExists := is.componentsManager.Components[ecs.PlayerComponent]
@@ -78,6 +83,51 @@ func (is *InputSystem) handlePlayerMovementInput() {
 		velocityComp.Vector.X = 1
 	}
 
+}
+*/
+
+func (is *InputSystem) handlePlayerMovmentInput() {
+
+	playerComps, playerCompsExists := is.componentsManager.Components[ecs.PlayerComponent]
+
+	if !playerCompsExists {
+		utils.ErrorLogger.Println("InputSystem: No player components found")
+		return
+	}
+
+	for entity := range playerComps {
+		rb, rbExists := is.EcsManager.GetComponent(entity, ecs.RigidBodyComponent).(*components.RigidBody)
+
+		if !rbExists {
+			continue
+		}
+
+		// Define the movement force
+		movementForce := float32(2000.0)
+
+		// Initialize the movement vector
+		force := raylib.NewVector2(0, 0)
+
+		if raylib.IsKeyDown(raylib.KeyW) {
+			force.Y = -movementForce
+		}
+
+		if raylib.IsKeyDown(raylib.KeyS) {
+			force.Y = movementForce
+		}
+
+		if raylib.IsKeyDown(raylib.KeyA) {
+			force.X = -movementForce
+		}
+
+		if raylib.IsKeyDown(raylib.KeyD) {
+			force.X = movementForce
+		}
+
+		// Apply the movement force to the RigidBody's force
+		rb.Force = raylib.Vector2Add(rb.Force, force)
+
+	}
 }
 
 func (is *InputSystem) handleEditorInput() {
@@ -121,5 +171,25 @@ func (is *InputSystem) handleSpawnerInput() {
 			is.EcsManager.AddComponent(entity, ecs.SpeedComponent, &components.Speed{Value: float32(raylib.GetRandomValue(50, 200))})
 			is.EcsManager.AddComponent(entity, ecs.ColorComponent, &components.Color{Color: color})
 		}
+	}
+}
+
+func (is *InputSystem) handleRigidBodySpawner() {
+
+	if raylib.IsKeyPressed(raylib.KeyR) {
+
+		// Create a rigid body entity
+		rigidBodyEntity := is.EcsManager.CreateEntity()
+
+		// Add a rigid body component to the rigid body entity
+		is.EcsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &components.RigidBody{
+			Mass:         1,
+			Velocity:     raylib.NewVector2(0, 0),
+			Acceleration: raylib.NewVector2(0, 0),
+			Force:        raylib.NewVector2(0, 0),
+			IsKinematic:  false,
+			IsStatic:     false,
+		})
+
 	}
 }

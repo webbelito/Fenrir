@@ -38,6 +38,14 @@ func (em *EntitiesManager) GetAllEntities() []*Entity {
 	return entities
 }
 
+func (em *EntitiesManager) GetEntity(id uint64) *Entity {
+	if _, exists := em.entites[id]; exists {
+		return &Entity{ID: id}
+	}
+
+	return nil
+}
+
 func (em *EntitiesManager) GetEntityCount() int {
 	return len(em.entites)
 }

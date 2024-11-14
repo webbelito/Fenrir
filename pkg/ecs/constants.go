@@ -4,8 +4,10 @@ package ecs
 const (
 	PositionComponent = iota
 	RigidBodyComponent
+	BoxColliderComponent
 	ColorComponent
 	SpeedComponent
 	PlayerComponent
 	VelocityComponent
+	SizeComponent
 )

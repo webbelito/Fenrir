@@ -9,6 +9,8 @@ type RigidBody struct {
 	Velocity     raylib.Vector2
 	Acceleration raylib.Vector2
 	Force        raylib.Vector2
+	Drag         float32
+	Restitution  float32
 	IsKinematic  bool
 	IsStatic     bool
 }
