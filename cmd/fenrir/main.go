@@ -6,6 +6,8 @@ import (
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/editor"
+	phsyicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
+	phsyicssystems "github.com/webbelito/Fenrir/pkg/physics/systems"
 	"github.com/webbelito/Fenrir/pkg/systems"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
@@ -45,11 +47,11 @@ func main() {
 	gravity := raylib.NewVector2(0, 980)
 
 	// Initialize the RigidBodySystem
-	rigidBodySystem := systems.NewRigidBodySystem(gravity)
+	rigidBodySystem := phsyicssystems.NewRigidBodySystem(gravity)
 	ecsManager.AddSystem(rigidBodySystem, 3)
 
 	// Initialize the CollisionSystem
-	collisionSystem := systems.NewCollisionSystem()
+	collisionSystem := phsyicssystems.NewCollisionSystem()
 	ecsManager.AddSystem(collisionSystem, 4)
 
 	// Create a player entity
@@ -61,7 +63,7 @@ func main() {
 	ecsManager.AddComponent(player, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
 	// Add RigidBody component to the player entity
-	ecsManager.AddComponent(player, ecs.RigidBodyComponent, &components.RigidBody{
+	ecsManager.AddComponent(player, ecs.RigidBodyComponent, &phsyicscomponents.RigidBody{
 		Mass:         1,
 		Velocity:     raylib.NewVector2(0, 0),
 		Acceleration: raylib.NewVector2(0, 0),
@@ -71,7 +73,7 @@ func main() {
 		IsKinematic:  false,
 		IsStatic:     false,
 	})
-	ecsManager.AddComponent(player, ecs.BoxColliderComponent, &components.BoxCollider{
+	ecsManager.AddComponent(player, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
 		Type: "Square",
 		Size: raylib.NewVector2(15, 15),
 	})
@@ -84,7 +86,7 @@ func main() {
 		ecsManager.AddComponent(rigidBodyEntity, ecs.ColorComponent, &components.Color{Color: raylib.Blue})
 		ecsManager.AddComponent(rigidBodyEntity, ecs.SizeComponent, &components.Size{Size: raylib.NewVector2(15, 15)})
 
-		ecsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &components.RigidBody{
+		ecsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &phsyicscomponents.RigidBody{
 			Mass:         0.01,
 			Velocity:     raylib.NewVector2(0, 0),
 			Acceleration: raylib.NewVector2(0, 0),
@@ -95,7 +97,7 @@ func main() {
 			IsStatic:     false,
 		})
 
-		ecsManager.AddComponent(rigidBodyEntity, ecs.BoxColliderComponent, &components.BoxCollider{
+		ecsManager.AddComponent(rigidBodyEntity, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
 			Type: "Square",
 			Size: raylib.NewVector2(15, 15),
 		})

@@ -5,6 +5,7 @@ import (
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/editor"
+	physicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
 	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
@@ -96,7 +97,7 @@ func (is *InputSystem) handlePlayerMovmentInput() {
 	}
 
 	for entity := range playerComps {
-		rb, rbExists := is.EcsManager.GetComponent(entity, ecs.RigidBodyComponent).(*components.RigidBody)
+		rb, rbExists := is.EcsManager.GetComponent(entity, ecs.RigidBodyComponent).(*physicscomponents.RigidBody)
 
 		if !rbExists {
 			continue
@@ -182,7 +183,7 @@ func (is *InputSystem) handleRigidBodySpawner() {
 		rigidBodyEntity := is.EcsManager.CreateEntity()
 
 		// Add a rigid body component to the rigid body entity
-		is.EcsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &components.RigidBody{
+		is.EcsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
 			Mass:         1,
 			Velocity:     raylib.NewVector2(0, 0),
 			Acceleration: raylib.NewVector2(0, 0),

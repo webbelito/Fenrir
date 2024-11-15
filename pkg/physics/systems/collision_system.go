@@ -1,10 +1,11 @@
-package systems
+package physicssystems
 
 import (
 	"math"
 
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	physicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
@@ -59,13 +60,13 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 			posB := positionComps[entityB].(*components.Position).Vector
 
 			// Get the rigid body components
-			rbA := rigidBodyComps[entityA].(*components.RigidBody)
-			rbB := rigidBodyComps[entityB].(*components.RigidBody)
+			rbA := rigidBodyComps[entityA].(*physicscomponents.RigidBody)
+			rbB := rigidBodyComps[entityB].(*physicscomponents.RigidBody)
 
 			// Get the collider components
 			// TODO: Implement a more generic Collider Type
-			colliderA := colliderComps[entityA].(*components.BoxCollider)
-			colliderB := colliderComps[entityB].(*components.BoxCollider)
+			colliderA := colliderComps[entityA].(*physicscomponents.BoxCollider)
+			colliderB := colliderComps[entityB].(*physicscomponents.BoxCollider)
 
 			// Handle Box to Box collision
 			if colliderA.Type == "Square" && colliderB.Type == "Square" {
@@ -78,7 +79,7 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	}
 }
 
-func (cs *CollisionSystem) handleBoxToBoxCollision(eA *ecs.Entity, pA raylib.Vector2, rbA *components.RigidBody, cA *components.BoxCollider, eB *ecs.Entity, pB raylib.Vector2, rbB *components.RigidBody, cB *components.BoxCollider) {
+func (cs *CollisionSystem) handleBoxToBoxCollision(eA *ecs.Entity, pA raylib.Vector2, rbA *physicscomponents.RigidBody, cA *physicscomponents.BoxCollider, eB *ecs.Entity, pB raylib.Vector2, rbB *physicscomponents.RigidBody, cB *physicscomponents.BoxCollider) {
 
 	// Get the width and height of the entities
 	widthA := cA.Size.X

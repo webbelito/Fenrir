@@ -1,4 +1,4 @@
-package components
+package physicscomponents
 
 import (
 	raylib "github.com/gen2brain/raylib-go/raylib"

@@ -1,8 +1,9 @@
-package systems
+package physicssystems
 
 import (
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	physicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
@@ -29,7 +30,7 @@ func (rbs *RigidBodySystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.
 	screenHeight := float32(raylib.GetScreenHeight())
 
 	for entity, rigidBodyComp := range rigidBodyComps {
-		rb, rbExists := rigidBodyComp.(*components.RigidBody)
+		rb, rbExists := rigidBodyComp.(*physicscomponents.RigidBody)
 
 		if !rbExists {
 			continue
