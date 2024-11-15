@@ -43,12 +43,8 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 		return
 	}
 
-	// Retrieve all entites with a position, rigid body and collider component
-	//entities := cs.entitiesManager.GetEntitiesWithComponents(cs.componentManager, []uint{ecs.PositionComponent, ecs.RigidBodyComponent, ecs.BoxColliderComponent})
-
-	// TODO: Implement a method to get entities with multiple components
-
-	utils.InfoLogger.Println("Entities: ", entities)
+	// Get all entities
+	entities := cs.componentManager.GetEntitiesWithComponents([]ecs.ComponentType{ecs.PositionComponent, ecs.RigidBodyComponent, ecs.BoxColliderComponent})
 
 	// Iterate over all entities unique pairs for collision detection
 	for i := 0; i < len(entities); i++ {
@@ -101,8 +97,6 @@ func (cs *CollisionSystem) handleBoxToBoxCollision(eA *ecs.Entity, pA raylib.Vec
 
 	// if there is an overlap, a collision has occurred
 	if overlapX > 0 && overlapY > 0 {
-
-		utils.InfoLogger.Println("Collision detected")
 
 		// Determine the axis of least penetration
 		if overlapX < overlapY {

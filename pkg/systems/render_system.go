@@ -87,12 +87,6 @@ func (rs *RenderSystem) RenderEntities() {
 
 	}
 
-	// Sort entites by ID to ensure consistent rendering order
-	/*sort.SliceStable(rs.Entities, func(i, j int) bool {
-		return rs.Entities[i].ID < rs.Entities[j].ID
-	})
-	*/
-
 	// Sort entities by ID to ensure consistent rendering order
 	sort.SliceStable(rs.Entities, func(i int, j int) bool {
 		return rs.Entities[i].ID < rs.Entities[j].ID // Not sure if ID.ID is the best way to do this
@@ -100,6 +94,21 @@ func (rs *RenderSystem) RenderEntities() {
 
 	// Render entities
 	for _, entity := range rs.Entities {
-		raylib.DrawRectangleV(entity.Vector, raylib.NewVector2(5, 5), entity.Color)
+
+		// Get the entity
+		e, entityExists := rs.entitiesManager.GetEntity(entity.ID)
+
+		if !entityExists {
+			continue
+		}
+
+		// Get the size of the entity
+		sizeComp, sizeCompExists := rs.componentsManager.Components[ecs.SizeComponent][e].(*components.Size)
+
+		if !sizeCompExists {
+			continue
+		}
+
+		raylib.DrawRectangleV(entity.Vector, raylib.NewVector2(sizeComp.Size.X, sizeComp.Size.Y), entity.Color)
 	}
 }

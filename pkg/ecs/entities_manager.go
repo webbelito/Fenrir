@@ -6,46 +6,43 @@ type Entity struct {
 
 type EntitiesManager struct {
 	nextEntityID uint64
-	entites      map[uint64]bool
+	entities     map[uint64]*Entity
 }
 
 func NewEntitiesManager() *EntitiesManager {
 	return &EntitiesManager{
 		nextEntityID: 1,
-		entites:      make(map[uint64]bool),
+		entities:     make(map[uint64]*Entity),
 	}
 }
 
 func (em *EntitiesManager) CreateEntity() *Entity {
 	entity := &Entity{ID: em.nextEntityID}
-	em.entites[entity.ID] = true
+	em.entities[entity.ID] = entity
 	em.nextEntityID++
 
 	return entity
 }
 
 func (em *EntitiesManager) DestroyEntity(e *Entity) {
-	delete(em.entites, e.ID)
+	delete(em.entities, e.ID)
 }
 
 func (em *EntitiesManager) GetAllEntities() []*Entity {
-	var entities []*Entity
+	entities := make([]*Entity, 0, len(em.entities))
 
-	for entity := range em.entites {
+	for entity := range em.entities {
 		entities = append(entities, &Entity{ID: entity})
 	}
 
 	return entities
 }
 
-func (em *EntitiesManager) GetEntity(id uint64) *Entity {
-	if _, exists := em.entites[id]; exists {
-		return &Entity{ID: id}
-	}
-
-	return nil
+func (em *EntitiesManager) GetEntity(id uint64) (*Entity, bool) {
+	entity, exists := em.entities[id]
+	return entity, exists
 }
 
 func (em *EntitiesManager) GetEntityCount() int {
-	return len(em.entites)
+	return len(em.entities)
 }
