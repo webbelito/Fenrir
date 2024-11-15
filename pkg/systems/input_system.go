@@ -41,52 +41,6 @@ func (is *InputSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Compo
 	is.handleRigidBodySpawner()
 }
 
-/*
-func (is *InputSystem) handlePlayerMovementInputOld() {
-
-	// Get all the player components
-	playerComps, playerCompsExists := is.componentsManager.Components[ecs.PlayerComponent]
-
-	if !playerCompsExists {
-		utils.ErrorLogger.Println("InputSystem: No player components found")
-		return
-	}
-
-	playerEntity := &ecs.Entity{}
-
-	// Get the first player component from playerComps
-	for player := range playerComps {
-		playerEntity = player
-		break
-	}
-
-	// Get the velocity component for the player entity
-	velocityComp, velExists := is.componentsManager.Components[ecs.VelocityComponent][playerEntity].(*components.Velocity)
-
-	if !velExists {
-		return
-	}
-
-	// Reset the velocity to zero; it will be set based on input
-	velocityComp.Vector = raylib.NewVector2(0, 0)
-
-	// Apply input-based acceleration
-	if raylib.IsKeyDown(raylib.KeyW) {
-		velocityComp.Vector.Y = -1
-	}
-	if raylib.IsKeyDown(raylib.KeyS) {
-		velocityComp.Vector.Y = 1
-	}
-	if raylib.IsKeyDown(raylib.KeyA) {
-		velocityComp.Vector.X = -1
-	}
-	if raylib.IsKeyDown(raylib.KeyD) {
-		velocityComp.Vector.X = 1
-	}
-
-}
-*/
-
 func (is *InputSystem) handlePlayerMovmentInput() {
 
 	playerComps, playerCompsExists := is.componentsManager.Components[ecs.PlayerComponent]
@@ -167,7 +121,7 @@ func (is *InputSystem) handleSpawnerInput() {
 
 			// Create an entity with a random position, velocity, speed and color
 			entity := is.EcsManager.CreateEntity()
-			is.EcsManager.AddComponent(entity, ecs.PositionComponent, &components.Position{Vector: raylib.NewVector2(float32(raylib.GetRandomValue(0, int32(raylib.GetScreenWidth())-1)), float32(raylib.GetRandomValue(0, int32(raylib.GetScreenHeight())-1)))})
+			is.EcsManager.AddComponent(entity, ecs.Transform2DComponent, &components.Transform2D{Position: raylib.NewVector2(float32(raylib.GetRandomValue(0, int32(raylib.GetScreenWidth())-1)), float32(raylib.GetRandomValue(0, int32(raylib.GetScreenHeight())-1)))})
 			is.EcsManager.AddComponent(entity, ecs.VelocityComponent, &components.Velocity{Vector: raylib.NewVector2(float32(raylib.GetRandomValue(-10, 10)), float32(raylib.GetRandomValue(-10, 10)))})
 			is.EcsManager.AddComponent(entity, ecs.SpeedComponent, &components.Speed{Value: float32(raylib.GetRandomValue(50, 200))})
 			is.EcsManager.AddComponent(entity, ecs.ColorComponent, &components.Color{Color: color})

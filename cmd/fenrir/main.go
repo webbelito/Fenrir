@@ -57,9 +57,12 @@ func main() {
 	// Create a player entity
 	player := ecsManager.CreateEntity()
 
-	ecsManager.AddComponent(player, ecs.PositionComponent, &components.Position{Vector: raylib.NewVector2(100, 100)})
+	ecsManager.AddComponent(player, ecs.Transform2DComponent, &components.Transform2D{
+		Position: raylib.NewVector2(100, 100),
+		Rotation: 0,
+		Scale:    raylib.NewVector2(15, 15),
+	})
 	ecsManager.AddComponent(player, ecs.ColorComponent, &components.Color{Color: raylib.Red})
-	ecsManager.AddComponent(player, ecs.SizeComponent, &components.Size{Size: raylib.NewVector2(15, 15)})
 	ecsManager.AddComponent(player, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
 	// Add RigidBody component to the player entity
@@ -82,9 +85,16 @@ func main() {
 
 		// Create a random rigid body entity
 		rigidBodyEntity := ecsManager.CreateEntity()
-		ecsManager.AddComponent(rigidBodyEntity, ecs.PositionComponent, &components.Position{Vector: raylib.NewVector2(float32(raylib.GetRandomValue(100, 1000)), float32(raylib.GetRandomValue(100, 1000)))})
+		ecsManager.AddComponent(rigidBodyEntity, ecs.Transform2DComponent, &components.Transform2D{
+			Position: raylib.NewVector2(
+				float32(raylib.GetRandomValue(100, 1000)),
+				float32(raylib.GetRandomValue(100, 1000)),
+			),
+			Rotation: 0,
+			Scale:    raylib.NewVector2(15, 15),
+		})
+
 		ecsManager.AddComponent(rigidBodyEntity, ecs.ColorComponent, &components.Color{Color: raylib.Blue})
-		ecsManager.AddComponent(rigidBodyEntity, ecs.SizeComponent, &components.Size{Size: raylib.NewVector2(15, 15)})
 
 		ecsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &phsyicscomponents.RigidBody{
 			Mass:         0.01,

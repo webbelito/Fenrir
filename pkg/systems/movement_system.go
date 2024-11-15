@@ -35,23 +35,23 @@ func (ms *MovementSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Co
 func (ms *MovementSystem) MoveEntities(dt float64) {
 
 	// Get entities with a position, velocity, speed, component
-	positionComps, posExist := ms.componentsManager.Components[ecs.PositionComponent]
-	veloComps, velExist := ms.componentsManager.Components[ecs.VelocityComponent]
-	SpeedComps, speedExist := ms.componentsManager.Components[ecs.SpeedComponent]
+	transformComps, tCompsExist := ms.componentsManager.Components[ecs.Transform2DComponent]
+	veloComps, vCompsExists := ms.componentsManager.Components[ecs.VelocityComponent]
+	SpeedComps, sCompsExists := ms.componentsManager.Components[ecs.SpeedComponent]
 	PlayerComps := ms.componentsManager.Components[ecs.PlayerComponent]
 
-	if !posExist || !velExist || !speedExist {
+	if !tCompsExist || !vCompsExists || !sCompsExists {
 		return
 	}
 
 	// Update the position of all entities with a position, velocity and speed component
 	for entity, vel := range veloComps {
-		position, posExists := positionComps[entity].(*components.Position)
-		velocity, velExists := vel.(*components.Velocity)
-		speed, speedExists := SpeedComps[entity].(*components.Speed)
-		_, playerExists := PlayerComps[entity].(*components.Player)
+		transform, tExists := transformComps[entity].(*components.Transform2D)
+		velocity, vExists := vel.(*components.Velocity)
+		speed, sExists := SpeedComps[entity].(*components.Speed)
+		_, pExists := PlayerComps[entity].(*components.Player)
 
-		if !posExists || !velExists || !speedExists {
+		if !tExists || !vExists || !sExists {
 			continue
 		}
 
@@ -60,18 +60,18 @@ func (ms *MovementSystem) MoveEntities(dt float64) {
 
 		// Calculate the new position based on the velocity and speed
 		deltaVelocity := raylib.Vector2Scale(normalizedVelocity, speed.Value*float32(dt))
-		position.Vector = raylib.Vector2Add(position.Vector, deltaVelocity)
+		transform.Position = raylib.Vector2Add(transform.Position, deltaVelocity)
 
 		// Clamp the player position to the screen bounds
-		if playerExists {
+		if pExists {
 
 			// Define the screen bounds
 			screenWidth := float32(raylib.GetScreenWidth())
 			screenHeight := float32(raylib.GetScreenHeight())
 
 			// Clamp the position to the screen bounds
-			position.Vector.X = raylib.Clamp(position.Vector.X, 0, screenWidth-5)
-			position.Vector.Y = raylib.Clamp(position.Vector.Y, 0, screenHeight-5)
+			transform.Position.X = raylib.Clamp(transform.Position.X, 0, screenWidth-5)
+			transform.Position.Y = raylib.Clamp(transform.Position.Y, 0, screenHeight-5)
 
 		}
 	}

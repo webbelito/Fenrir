@@ -60,46 +60,39 @@ func (rbs *RigidBodySystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.
 		rb.Velocity = raylib.Vector2Add(rb.Velocity, raylib.Vector2Scale(rb.Acceleration, float32(dt)))
 
 		// Get the position component for the entity
-		positionComp, posCompExists := cm.Components[ecs.PositionComponent][entity].(*components.Position)
+		transform, transformExists := cm.Components[ecs.Transform2DComponent][entity].(*components.Transform2D)
 
 		// Handle Position related Updates
-		if posCompExists {
+		if transformExists {
 
-			// Boundry clamping
-			// Assume entites have a Size component
-			sizeComp, sizeCompExists := cm.Components[ecs.SizeComponent][entity].(*components.Size)
+			// Clamp the position to the screen bounds
 
-			if sizeCompExists {
-
-				// Clamp the position to the screen bounds
-
-				// If the position is less than the size, set it to the size
-				if positionComp.Vector.X < sizeComp.Size.X {
-					positionComp.Vector.X = sizeComp.Size.X
-					rb.Velocity.X = 0
-					// If the position is greater than the screen width minus the size, set it to the screen width minus the size
-				} else if positionComp.Vector.X > screenWidth-sizeComp.Size.X {
-					positionComp.Vector.X = screenWidth - sizeComp.Size.X
-					rb.Velocity.X = 0
-				}
-
-				// If the position is less than the size, set it to the size
-				if positionComp.Vector.Y < sizeComp.Size.Y {
-					positionComp.Vector.Y = sizeComp.Size.Y
-					rb.Velocity.Y = 0
-					// If the position is greater than the screen height minus the size, set it to the screen height minus the size
-				} else if positionComp.Vector.Y > screenHeight-sizeComp.Size.Y {
-					positionComp.Vector.Y = screenHeight - sizeComp.Size.Y
-					rb.Velocity.Y = 0
-				}
+			// If the position is less than the size, set it to the size
+			if transform.Position.X < transform.Scale.X {
+				transform.Position.X = transform.Scale.X
+				rb.Velocity.X = 0
+				// If the position is greater than the screen width minus the size, set it to the screen width minus the size
+			} else if transform.Position.X > screenWidth-transform.Scale.X {
+				transform.Position.X = screenWidth - transform.Scale.X
+				rb.Velocity.X = 0
 			}
 
-			// Update position based on velocity (p += v * dt)
-			positionComp.Vector = raylib.Vector2Add(positionComp.Vector, raylib.Vector2Scale(rb.Velocity, float32(dt)))
+			// If the position is less than the size, set it to the size
+			if transform.Position.Y < transform.Scale.Y {
+				transform.Position.Y = transform.Scale.Y
+				rb.Velocity.Y = 0
+				// If the position is greater than the screen height minus the size, set it to the screen height minus the size
+			} else if transform.Position.Y > screenHeight-transform.Scale.Y {
+				transform.Position.Y = screenHeight - transform.Scale.Y
+				rb.Velocity.Y = 0
+			}
 		}
+
+		// Update position based on velocity (p += v * dt)
+		transform.Position = raylib.Vector2Add(transform.Position, raylib.Vector2Scale(rb.Velocity, float32(dt)))
 
 		// Reset force for the next frame
 		rb.Force = raylib.NewVector2(0, 0)
-
 	}
+
 }

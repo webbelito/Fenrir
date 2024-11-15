@@ -18,9 +18,11 @@ type RenderSystem struct {
 }
 
 type EntityData struct {
-	ID     uint64
-	Vector raylib.Vector2
-	Color  raylib.Color
+	ID       uint64
+	Position raylib.Vector2
+	Rotation float32
+	Scale    raylib.Vector2
+	Color    raylib.Color
 }
 
 func NewRenderSystem(screenBounds raylib.Rectangle) *RenderSystem {
@@ -51,13 +53,10 @@ func (rs *RenderSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Comp
 
 func (rs *RenderSystem) RenderEntities() {
 
-	// Get all entities with a position component
-	allPositionsComp, allPosExists := rs.componentsManager.Components[ecs.PositionComponent]
+	transformComps, transformCompsExists := rs.componentsManager.Components[ecs.Transform2DComponent]
+	colorComps, colorCompsExists := rs.componentsManager.Components[ecs.ColorComponent]
 
-	// Get all entities with a color component
-	allColorsComp, allColExists := rs.componentsManager.Components[ecs.ColorComponent]
-
-	if !allPosExists && !allColExists {
+	if !transformCompsExists || !colorCompsExists {
 		return
 	}
 
@@ -65,50 +64,37 @@ func (rs *RenderSystem) RenderEntities() {
 	rs.Entities = rs.Entities[:0]
 
 	// Collect entites that have both Position and Color components
-	for entity, pos := range allPositionsComp {
-		posComp, posCompExists := pos.(*components.Position)
-		colorComp, colorCompExists := allColorsComp[entity].(*components.Color)
+	for entity, pos := range transformComps {
+		transform, _ := pos.(*components.Transform2D)
+		colorComp, colorCompExists := colorComps[entity].(*components.Color)
 
-		if !posCompExists && !colorCompExists {
+		if !colorCompExists {
 			continue
 		}
 
 		// Check if the entity is within the screen bounds
-		if !raylib.CheckCollisionPointRec(posComp.Vector, rs.ScreenCullingRect) {
+		if !raylib.CheckCollisionPointRec(transform.Position, rs.ScreenCullingRect) {
 			continue
 		}
 
 		// Add the entity to the slice
 		rs.Entities = append(rs.Entities, EntityData{
-			ID:     entity.ID,
-			Vector: posComp.Vector,
-			Color:  colorComp.Color,
+			ID:       entity.ID,
+			Position: transform.Position,
+			Rotation: transform.Rotation,
+			Scale:    transform.Scale,
+			Color:    colorComp.Color,
 		})
 
 	}
 
 	// Sort entities by ID to ensure consistent rendering order
 	sort.SliceStable(rs.Entities, func(i int, j int) bool {
-		return rs.Entities[i].ID < rs.Entities[j].ID // Not sure if ID.ID is the best way to do this
+		return rs.Entities[i].ID < rs.Entities[j].ID
 	})
 
 	// Render entities
 	for _, entity := range rs.Entities {
-
-		// Get the entity
-		e, entityExists := rs.entitiesManager.GetEntity(entity.ID)
-
-		if !entityExists {
-			continue
-		}
-
-		// Get the size of the entity
-		sizeComp, sizeCompExists := rs.componentsManager.Components[ecs.SizeComponent][e].(*components.Size)
-
-		if !sizeCompExists {
-			continue
-		}
-
-		raylib.DrawRectangleV(entity.Vector, raylib.NewVector2(sizeComp.Size.X, sizeComp.Size.Y), entity.Color)
+		raylib.DrawRectangleV(entity.Position, entity.Scale, entity.Color)
 	}
 }

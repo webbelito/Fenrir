@@ -31,8 +31,8 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	cs.entitiesManager = em
 	cs.componentManager = cm
 
-	// Get all position components
-	positionComps, posExist := cs.componentManager.Components[ecs.PositionComponent]
+	// Get all transform components
+	transformComp, transformExists := cs.componentManager.Components[ecs.Transform2DComponent]
 
 	// Get all rigid body components
 	rigidBodyComps, rigidBodyCompsExist := cs.componentManager.Components[ecs.RigidBodyComponent]
@@ -40,12 +40,12 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	// Get all collider components
 	colliderComps, colliderCompsExist := cs.componentManager.Components[ecs.BoxColliderComponent]
 
-	if !posExist || !rigidBodyCompsExist || !colliderCompsExist {
+	if !transformExists || !rigidBodyCompsExist || !colliderCompsExist {
 		return
 	}
 
 	// Get all entities
-	entities := cs.componentManager.GetEntitiesWithComponents([]ecs.ComponentType{ecs.PositionComponent, ecs.RigidBodyComponent, ecs.BoxColliderComponent})
+	entities := cs.componentManager.GetEntitiesWithComponents([]ecs.ComponentType{ecs.Transform2DComponent, ecs.RigidBodyComponent, ecs.BoxColliderComponent})
 
 	// Iterate over all entities unique pairs for collision detection
 	for i := 0; i < len(entities); i++ {
@@ -56,8 +56,8 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 			entityB := entities[j]
 
 			// Get the position components
-			posA := positionComps[entityA].(*components.Position).Vector
-			posB := positionComps[entityB].(*components.Position).Vector
+			posA := transformComp[entityA].(*components.Transform2D).Position
+			posB := transformComp[entityB].(*components.Transform2D).Position
 
 			// Get the rigid body components
 			rbA := rigidBodyComps[entityA].(*physicscomponents.RigidBody)
@@ -118,8 +118,8 @@ func (cs *CollisionSystem) handleBoxToBoxCollision(eA *ecs.Entity, pA raylib.Vec
 			pB = raylib.Vector2Add(pB, separation)
 
 			// Update positions
-			cs.componentManager.Components[ecs.PositionComponent][eA].(*components.Position).Vector = pA
-			cs.componentManager.Components[ecs.PositionComponent][eB].(*components.Position).Vector = pB
+			cs.componentManager.Components[ecs.Transform2DComponent][eA].(*components.Transform2D).Position = pA
+			cs.componentManager.Components[ecs.Transform2DComponent][eB].(*components.Transform2D).Position = pB
 
 			// Calculate relative velocity
 			relativeVelocity := raylib.Vector2Subtract(rbB.Velocity, rbA.Velocity)
@@ -162,8 +162,8 @@ func (cs *CollisionSystem) handleBoxToBoxCollision(eA *ecs.Entity, pA raylib.Vec
 			pB = raylib.Vector2Add(pB, separation)
 
 			// Update positions
-			cs.componentManager.Components[ecs.PositionComponent][eA].(*components.Position).Vector = pA
-			cs.componentManager.Components[ecs.PositionComponent][eB].(*components.Position).Vector = pB
+			cs.componentManager.Components[ecs.Transform2DComponent][eA].(*components.Transform2D).Position = pA
+			cs.componentManager.Components[ecs.Transform2DComponent][eB].(*components.Transform2D).Position = pB
 
 			// Calculate relative velocity
 			relativeVelocity := raylib.Vector2Subtract(rbB.Velocity, rbA.Velocity)

@@ -2,12 +2,11 @@ package ecs
 
 // Component types for the ECS
 const (
-	PositionComponent = iota
+	Transform2DComponent = iota
 	RigidBodyComponent
 	BoxColliderComponent
 	ColorComponent
 	SpeedComponent
 	PlayerComponent
 	VelocityComponent
-	SizeComponent
 )
