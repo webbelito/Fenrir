@@ -57,16 +57,16 @@ func main() {
 	// Create a player entity
 	player := ecsManager.CreateEntity()
 
-	ecsManager.AddComponent(player, ecs.Transform2DComponent, &components.Transform2D{
+	ecsManager.AddComponent(player.ID, ecs.Transform2DComponent, &components.Transform2D{
 		Position: raylib.NewVector2(100, 100),
 		Rotation: 0,
 		Scale:    raylib.NewVector2(15, 15),
 	})
-	ecsManager.AddComponent(player, ecs.ColorComponent, &components.Color{Color: raylib.Red})
-	ecsManager.AddComponent(player, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
+	ecsManager.AddComponent(player.ID, ecs.ColorComponent, &components.Color{Color: raylib.Red})
+	ecsManager.AddComponent(player.ID, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
 	// Add RigidBody component to the player entity
-	ecsManager.AddComponent(player, ecs.RigidBodyComponent, &phsyicscomponents.RigidBody{
+	ecsManager.AddComponent(player.ID, ecs.RigidBodyComponent, &phsyicscomponents.RigidBody{
 		Mass:         1,
 		Velocity:     raylib.NewVector2(0, 0),
 		Acceleration: raylib.NewVector2(0, 0),
@@ -76,7 +76,7 @@ func main() {
 		IsKinematic:  false,
 		IsStatic:     false,
 	})
-	ecsManager.AddComponent(player, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
+	ecsManager.AddComponent(player.ID, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
 		Type: "Square",
 		Size: raylib.NewVector2(15, 15),
 	})
@@ -85,7 +85,7 @@ func main() {
 
 		// Create a random rigid body entity
 		rigidBodyEntity := ecsManager.CreateEntity()
-		ecsManager.AddComponent(rigidBodyEntity, ecs.Transform2DComponent, &components.Transform2D{
+		ecsManager.AddComponent(rigidBodyEntity.ID, ecs.Transform2DComponent, &components.Transform2D{
 			Position: raylib.NewVector2(
 				float32(raylib.GetRandomValue(100, 1000)),
 				float32(raylib.GetRandomValue(100, 1000)),
@@ -94,9 +94,8 @@ func main() {
 			Scale:    raylib.NewVector2(15, 15),
 		})
 
-		ecsManager.AddComponent(rigidBodyEntity, ecs.ColorComponent, &components.Color{Color: raylib.Blue})
-
-		ecsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &phsyicscomponents.RigidBody{
+		ecsManager.AddComponent(rigidBodyEntity.ID, ecs.ColorComponent, &components.Color{Color: raylib.Blue})
+		ecsManager.AddComponent(rigidBodyEntity.ID, ecs.RigidBodyComponent, &phsyicscomponents.RigidBody{
 			Mass:         0.01,
 			Velocity:     raylib.NewVector2(0, 0),
 			Acceleration: raylib.NewVector2(0, 0),
@@ -107,7 +106,7 @@ func main() {
 			IsStatic:     false,
 		})
 
-		ecsManager.AddComponent(rigidBodyEntity, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
+		ecsManager.AddComponent(rigidBodyEntity.ID, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
 			Type: "Square",
 			Size: raylib.NewVector2(15, 15),
 		})

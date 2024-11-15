@@ -18,9 +18,9 @@ func (em *ECSManager) CreateEntity() *Entity {
 	return em.entitiesManager.CreateEntity()
 }
 
-func (em *ECSManager) DestroyEntity(e *Entity) {
-	em.entitiesManager.DestroyEntity(e)
-	em.componentsManager.DestroyEntityComponents(e)
+func (em *ECSManager) DestroyEntity(id uint64) {
+	em.entitiesManager.DestroyEntity(id)
+	em.componentsManager.DestroyEntityComponents(id)
 }
 
 func (em *ECSManager) GetAllEntities() []*Entity {
@@ -31,12 +31,12 @@ func (em *ECSManager) GetEntityCount() int {
 	return em.entitiesManager.GetEntityCount()
 }
 
-func (em *ECSManager) AddComponent(e *Entity, ct ComponentType, c Component) {
-	em.componentsManager.AddComponent(e, ct, c)
+func (em *ECSManager) AddComponent(eID uint64, ct ComponentType, c Component) {
+	em.componentsManager.AddComponent(eID, ct, c)
 }
 
-func (em *ECSManager) GetComponent(e *Entity, ct ComponentType) Component {
-	return em.componentsManager.GetComponent(e, ct)
+func (em *ECSManager) GetComponent(eID uint64, ct ComponentType) (Component, bool) {
+	return em.componentsManager.GetComponent(eID, ct)
 }
 
 func (em *ECSManager) AddSystem(system System, priority int) {

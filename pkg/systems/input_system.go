@@ -51,7 +51,13 @@ func (is *InputSystem) handlePlayerMovmentInput() {
 	}
 
 	for entity := range playerComps {
-		rb, rbExists := is.EcsManager.GetComponent(entity, ecs.RigidBodyComponent).(*physicscomponents.RigidBody)
+		rbComponent, rbCompExists := is.EcsManager.GetComponent(entity, ecs.RigidBodyComponent)
+
+		if !rbCompExists {
+			continue
+		}
+
+		rb, rbExists := rbComponent.(*physicscomponents.RigidBody)
 
 		if !rbExists {
 			continue
@@ -121,10 +127,10 @@ func (is *InputSystem) handleSpawnerInput() {
 
 			// Create an entity with a random position, velocity, speed and color
 			entity := is.EcsManager.CreateEntity()
-			is.EcsManager.AddComponent(entity, ecs.Transform2DComponent, &components.Transform2D{Position: raylib.NewVector2(float32(raylib.GetRandomValue(0, int32(raylib.GetScreenWidth())-1)), float32(raylib.GetRandomValue(0, int32(raylib.GetScreenHeight())-1)))})
-			is.EcsManager.AddComponent(entity, ecs.VelocityComponent, &components.Velocity{Vector: raylib.NewVector2(float32(raylib.GetRandomValue(-10, 10)), float32(raylib.GetRandomValue(-10, 10)))})
-			is.EcsManager.AddComponent(entity, ecs.SpeedComponent, &components.Speed{Value: float32(raylib.GetRandomValue(50, 200))})
-			is.EcsManager.AddComponent(entity, ecs.ColorComponent, &components.Color{Color: color})
+			is.EcsManager.AddComponent(entity.ID, ecs.Transform2DComponent, &components.Transform2D{Position: raylib.NewVector2(float32(raylib.GetRandomValue(0, int32(raylib.GetScreenWidth())-1)), float32(raylib.GetRandomValue(0, int32(raylib.GetScreenHeight())-1)))})
+			is.EcsManager.AddComponent(entity.ID, ecs.VelocityComponent, &components.Velocity{Vector: raylib.NewVector2(float32(raylib.GetRandomValue(-10, 10)), float32(raylib.GetRandomValue(-10, 10)))})
+			is.EcsManager.AddComponent(entity.ID, ecs.SpeedComponent, &components.Speed{Value: float32(raylib.GetRandomValue(50, 200))})
+			is.EcsManager.AddComponent(entity.ID, ecs.ColorComponent, &components.Color{Color: color})
 		}
 	}
 }
@@ -137,7 +143,7 @@ func (is *InputSystem) handleRigidBodySpawner() {
 		rigidBodyEntity := is.EcsManager.CreateEntity()
 
 		// Add a rigid body component to the rigid body entity
-		is.EcsManager.AddComponent(rigidBodyEntity, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
+		is.EcsManager.AddComponent(rigidBodyEntity.ID, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
 			Mass:         1,
 			Velocity:     raylib.NewVector2(0, 0),
 			Acceleration: raylib.NewVector2(0, 0),

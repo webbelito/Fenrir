@@ -4,115 +4,134 @@ import (
 	"sync"
 )
 
+// ComponentType represent the type of a component
 type ComponentType uint64
 
-// Generic component interface
+// Component is the interface that all components should implement
 type Component interface{}
 
+// ComponentsManager manages all components associated with entities
 type ComponentsManager struct {
-	Components map[ComponentType]map[*Entity]Component
+	Components map[ComponentType]map[uint64]Component
 	compMutex  sync.RWMutex
 }
 
+// NewComponentsManager initliazes and returns a new ComponentsManager
 func NewComponentsManager() *ComponentsManager {
 	return &ComponentsManager{
-		Components: make(map[ComponentType]map[*Entity]Component),
+		Components: make(map[ComponentType]map[uint64]Component),
 	}
 }
 
-func (cm *ComponentsManager) AddComponent(e *Entity, ct ComponentType, c Component) {
+// AddComponent adds a component to a specific entity.
+// It initializes the compopnent map for the type if it doesn't exist.
+func (cm *ComponentsManager) AddComponent(eID uint64, ct ComponentType, c Component) {
 
 	cm.compMutex.Lock()
 	defer cm.compMutex.Unlock()
 
 	if _, exists := cm.Components[ct]; !exists {
-		cm.Components[ct] = make(map[*Entity]Component)
+		cm.Components[ct] = make(map[uint64]Component)
 	}
 
-	cm.Components[ct][e] = c
+	cm.Components[ct][eID] = c
 }
 
-func (cm *ComponentsManager) GetComponent(e *Entity, ct ComponentType) Component {
+// GetComponent retrieves a component of a specific type for a given entity.
+// It returns the compenent and a boolean indicating if the component exists.
+func (cm *ComponentsManager) GetComponent(eID uint64, ct ComponentType) (Component, bool) {
 
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
-	if _, exists := cm.Components[ct]; exists {
-		return cm.Components[ct][e]
+	comps, compsExists := cm.Components[ct]
+
+	if !compsExists {
+		return nil, false
 	}
 
-	return nil
+	comp, compExists := comps[eID]
+	return comp, compExists
+
 }
 
-func (cm *ComponentsManager) GetEntitiesWithComponents(componentTypes []ComponentType) []*Entity {
-
+// GetComponentsOfType retrieves all components of a specific type.
+// It returns a map of entities and their components and a boolean indicating if the components exist.
+func (cm *ComponentsManager) GetComponentsOfType(ct ComponentType) (map[uint64]Component, bool) {
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
-	if len(componentTypes) == 0 {
+	comps, compsExists := cm.Components[ct]
+
+	if !compsExists {
+		return nil, false
+	}
+
+	return comps, compsExists
+}
+
+func (cm *ComponentsManager) GetEntitiesWithComponents(cts []ComponentType) []uint64 {
+	cm.compMutex.RLock()
+	defer cm.compMutex.RUnlock()
+
+	if len(cts) == 0 {
 		return nil
 	}
 
-	// Find the component type with the least amount of entities
-	minCompType := componentTypes[0]
-	minCount := len(cm.Components[minCompType])
+	// Initialize with the smallest component type set to optimize the search.
+	minIndex := 0
+	minCount := len(cm.Components[cts[0]])
 
-	for _, ct := range componentTypes {
-
-		entitiesMap, exists := cm.Components[ct]
-		if !exists || len(entitiesMap) == 0 {
+	for i, ct := range cts {
+		if comps, exists := cm.Components[ct]; exists {
+			if len(comps) < minCount {
+				minCount = len(comps)
+				minIndex = i
+			}
+		} else {
+			// If a component type is not found, return nil
 			return nil
-		}
-
-		if len(entitiesMap) < minCount {
-			minCount = len(entitiesMap)
-			minCompType = ct
 		}
 	}
 
 	// Start with entities having the least common component
-	baseEntities := cm.Components[minCompType]
-	result := make([]*Entity, 0)
+	smallestComps := cm.Components[cts[minIndex]]
+	entities := make([]uint64, 0, minCount)
 
-	// Check each entity for the presence of other components
-	for entity := range baseEntities {
-		hasAllComponents := true
-
-		// Iterate over all component types
-		for _, ct := range componentTypes {
-			if ct == minCompType {
+	for entity := range smallestComps {
+		hasAll := true
+		for i, ct := range cts {
+			if i == minIndex {
 				continue
 			}
 			if _, exists := cm.Components[ct][entity]; !exists {
-				hasAllComponents = false
+				hasAll = false
 				break
 			}
 		}
-		if hasAllComponents {
-			result = append(result, entity)
+		if hasAll {
+			entities = append(entities, entity)
 		}
 	}
 
-	return result
+	return entities
 
 }
 
-func (cm *ComponentsManager) RemoveComponent(e *Entity, ct ComponentType) {
+func (cm *ComponentsManager) RemoveComponent(eID uint64, ct ComponentType) {
 
 	cm.compMutex.Lock()
+	delete(cm.Components[ct], eID)
 	defer cm.compMutex.Unlock()
 
-	if _, exists := cm.Components[ct]; exists {
-		delete(cm.Components[ct], e)
-	}
 }
 
-func (cm *ComponentsManager) DestroyEntityComponents(e *Entity) {
+func (cm *ComponentsManager) DestroyEntityComponents(id uint64) {
 
 	cm.compMutex.Lock()
 	defer cm.compMutex.Unlock()
 
 	for _, components := range cm.Components {
-		delete(components, e)
+		delete(components, id)
 	}
 }

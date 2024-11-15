@@ -79,7 +79,7 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	}
 }
 
-func (cs *CollisionSystem) handleBoxToBoxCollision(eA *ecs.Entity, pA raylib.Vector2, rbA *physicscomponents.RigidBody, cA *physicscomponents.BoxCollider, eB *ecs.Entity, pB raylib.Vector2, rbB *physicscomponents.RigidBody, cB *physicscomponents.BoxCollider) {
+func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, pA raylib.Vector2, rbA *physicscomponents.RigidBody, cA *physicscomponents.BoxCollider, eB uint64, pB raylib.Vector2, rbB *physicscomponents.RigidBody, cB *physicscomponents.BoxCollider) {
 
 	// Get the width and height of the entities
 	widthA := cA.Size.X

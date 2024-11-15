@@ -79,7 +79,7 @@ func (rs *RenderSystem) RenderEntities() {
 
 		// Add the entity to the slice
 		rs.Entities = append(rs.Entities, EntityData{
-			ID:       entity.ID,
+			ID:       entity,
 			Position: transform.Position,
 			Rotation: transform.Rotation,
 			Scale:    transform.Scale,

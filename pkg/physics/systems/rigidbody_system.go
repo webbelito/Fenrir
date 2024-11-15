@@ -94,5 +94,4 @@ func (rbs *RigidBodySystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.
 		// Reset force for the next frame
 		rb.Force = raylib.NewVector2(0, 0)
 	}
-
 }
