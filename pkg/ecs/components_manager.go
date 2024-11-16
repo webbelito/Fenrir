@@ -12,6 +12,8 @@ type Component interface{}
 
 // ComponentsManager manages all components associated with entities
 type ComponentsManager struct {
+
+	// TODO: Rename Components to components, ensure that the map is private
 	Components map[ComponentType]map[uint64]Component
 	compMutex  sync.RWMutex
 }
