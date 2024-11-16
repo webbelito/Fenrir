@@ -20,6 +20,14 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// Constants for collision resolution
+const (
+	slop              = 0.01 // Allowable penetration for collision resolution
+	velocityThreshold = 0.1  // Minimum velocity for collision resolution before clamping
+	DampingFactor     = 0.98 // Damping factor for to reduce oscillation
+	PercentCorrection = 0.8  // Percentage of penetration to correct
+)
+
 type CollisionSystem struct {
 	quadTree *physics.QuadTree
 	csMutex  sync.RWMutex
@@ -188,47 +196,76 @@ func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, eB uint64, cm *ecs
 		return
 	}
 
+	// Determine the axis of least penetration
+	var normal raylib.Vector2
+	var penetration float32
+
 	// Determine the smallest overlap
 	if overlapX < overlapY {
 
 		// Resolve collision on the X axis
 		if deltaX > 0 {
-			tA.Position.X -= overlapX / 2
-			tb.Position.X += overlapX / 2
+			normal = raylib.NewVector2(1, 0)
 		} else {
-			tA.Position.X += overlapX / 2
-			tb.Position.X -= overlapX / 2
+			normal = raylib.NewVector2(-1, 0)
 		}
-
-		// Adjust velocities based on restitution
-		vxA := rbA.Velocity.X
-		vxB := rbB.Velocity.X
-		rX := (rbA.Restitution + rbB.Restitution) / 2
-
-		// Swap velocities with restitution Forumal: v1' = (v1(m1-m2) + 2*m2*v2) / (m1 + m2) * r
-		rbA.Velocity.X = (vxA*(rbA.Mass-rbB.Mass) + 2*rbB.Mass*vxB) / (rbA.Mass + rbB.Mass) * rX
-		rbB.Velocity.X = (vxB*(rbB.Mass-rbA.Mass) + 2*rbA.Mass*vxA) / (rbA.Mass + rbB.Mass) * rX
-
+		penetration = overlapX
 	} else {
 
 		// Resolve collision on the Y axis
 		if deltaY > 0 {
-			tA.Position.Y -= overlapY / 2
-			tb.Position.Y += overlapY / 2
+			normal = raylib.NewVector2(0, 1)
 		} else {
-			tA.Position.Y += overlapY / 2
-			tb.Position.Y -= overlapY / 2
+			normal = raylib.NewVector2(0, -1)
 		}
+		penetration = overlapY
+	}
 
-		// Adjust velocities based on restitution
-		vyA := rbA.Velocity.Y
-		vyB := rbB.Velocity.Y
-		rY := (rbA.Restitution + rbB.Restitution) / 2
+	// Relative velocity
+	relativeVelocity := raylib.Vector2Subtract(rbB.Velocity, rbA.Velocity)
+	velocityAlongNormal := raylib.Vector2DotProduct(relativeVelocity, normal)
 
-		// Swap velocities with restitution Forumal: v1' = (v1(m1-m2) + 2*m2*v2) / (m1 + m2) * r
-		rbA.Velocity.Y = (vyA*(rbA.Mass-rbB.Mass) + 2*rbB.Mass*vyB) / (rbA.Mass + rbB.Mass) * rY
-		rbB.Velocity.Y = (vyB*(rbB.Mass-rbA.Mass) + 2*rbA.Mass*vyA) / (rbA.Mass + rbB.Mass) * rY
+	// Do not resolve if velocities are separating
+	if velocityAlongNormal > 0 {
+		return
+	}
 
+	// Calculate restitution (bounciness)
+	restitution := math.Min(float64(rbA.Restitution), float64(rbB.Restitution))
+
+	// Calculate impulse scalar
+	impulseScalar := -(1 + float32(restitution)) * velocityAlongNormal
+	impulseScalar /= (rbA.InvMass + rbB.InvMass)
+
+	// Calculate impulse vector
+	impulse := raylib.Vector2Scale(normal, impulseScalar)
+
+	// Apply impulse to the entities
+	rbA.Velocity = raylib.Vector2Subtract(rbA.Velocity, raylib.Vector2Scale(impulse, rbA.InvMass))
+	rbB.Velocity = raylib.Vector2Add(rbB.Velocity, raylib.Vector2Scale(impulse, rbB.InvMass))
+
+	// Positional correction to prevent sinking and jitter
+	correctionMagnitude := float32(float32(math.Max(float64(penetration-slop), float64(0.0))) / (rbA.InvMass + rbB.InvMass))
+	correction := raylib.Vector2Scale(normal, correctionMagnitude)
+
+	// Apply positional correction based on inverse mass, only if not static
+	if rbA.InvMass != 0 {
+		tA.Position = raylib.Vector2Subtract(tA.Position, raylib.Vector2Scale(correction, rbA.InvMass))
+	}
+	if rbB.InvMass != 0 {
+		tb.Position = raylib.Vector2Add(tb.Position, raylib.Vector2Scale(correction, rbB.InvMass))
+	}
+
+	// Apply daming to reduce residual velocity and	prevent	oscillation.
+	rbA.Velocity = raylib.Vector2Scale(rbA.Velocity, DampingFactor)
+	rbB.Velocity = raylib.Vector2Scale(rbB.Velocity, DampingFactor)
+
+	// Clamp velocities below the threshold to prevent jitter
+	if raylib.Vector2Length(rbA.Velocity) < velocityThreshold {
+		rbA.Velocity = raylib.NewVector2(0, 0)
+	}
+	if raylib.Vector2Length(rbB.Velocity) < velocityThreshold {
+		rbB.Velocity = raylib.NewVector2(0, 0)
 	}
 }
 

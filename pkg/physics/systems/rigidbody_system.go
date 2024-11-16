@@ -56,6 +56,13 @@ func (rbs *RigidBodySystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.
 			rb.Acceleration = raylib.NewVector2(0, 0)
 		}
 
+		// Calculate InvMass
+		if rb.Mass != 0 {
+			rb.InvMass = 1 / rb.Mass
+		} else {
+			rb.InvMass = 0
+		}
+
 		// Update velocity based on acceleration (v += a * dt)
 		rb.Velocity = raylib.Vector2Add(rb.Velocity, raylib.Vector2Scale(rb.Acceleration, float32(dt)))
 
