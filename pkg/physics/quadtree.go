@@ -68,6 +68,11 @@ func (qt *QuadTree) Subdivide() {
 // Insert adds an entity to the QuadTree
 func (qt *QuadTree) Insert(eID uint64, p raylib.Vector2) bool {
 
+	if qt.Boundry.Width == 0 || qt.Boundry.Height == 0 {
+		utils.WarnLogger.Println("Failed to insert entity into QuadTree with zero width or height")
+		return false
+	}
+
 	// If the position is not withing the boundry, reject the insertion
 	if !qt.Boundry.Contains(p) {
 		return false
@@ -76,7 +81,7 @@ func (qt *QuadTree) Insert(eID uint64, p raylib.Vector2) bool {
 	// If there's still capacity, add the QuadTree hasn't been subdivided, add the entity
 	if len(qt.Entities) < int(qt.Capacity) {
 		qt.Entities = append(qt.Entities, eID)
-		return false
+		return true
 	}
 
 	// Subdivide if capacity is exceeded and not already divided
@@ -99,7 +104,7 @@ func (qt *QuadTree) Insert(eID uint64, p raylib.Vector2) bool {
 	}
 
 	// We should never reach this point
-	utils.WarnLogger.Println("Failed to insert entity into QuadTree")
+	utils.WarnLogger.Printf("Failed to insert entity %d into any child QuadTree", eID)
 	return false
 }
 

@@ -5,10 +5,14 @@ import (
 
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+
 	"github.com/webbelito/Fenrir/pkg/editor"
+
+	"github.com/webbelito/Fenrir/pkg/systems"
+
+	phsyics "github.com/webbelito/Fenrir/pkg/physics"
 	phsyicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
 	phsyicssystems "github.com/webbelito/Fenrir/pkg/physics/systems"
-	"github.com/webbelito/Fenrir/pkg/systems"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
@@ -51,7 +55,14 @@ func main() {
 	ecsManager.AddSystem(rigidBodySystem, 3)
 
 	// Initialize the CollisionSystem
-	collisionSystem := phsyicssystems.NewCollisionSystem()
+
+	quadBoundary := phsyics.Rectangle{
+		Position: raylib.NewVector2(0, 0),
+		Width:    float32(raylib.GetScreenWidth()),
+		Height:   float32(raylib.GetScreenHeight()),
+	}
+
+	collisionSystem := phsyicssystems.NewCollisionSystem(quadBoundary, 4)
 	ecsManager.AddSystem(collisionSystem, 4)
 
 	// Create a player entity
