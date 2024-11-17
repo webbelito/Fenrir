@@ -67,41 +67,6 @@ func (pm *PerformanceMonitor) Update(pmd *PerformanceMonitorData) {
 	pm.historyIndex = (pm.historyIndex + 1) % historySize
 }
 
-func (pmd *PerformanceMonitorData) calculateAverageFPS() float64 {
-	var sum int32
-	for _, fps := range pmd.FPSHistory {
-		sum += fps
-	}
-
-	avg := float64(sum) / float64(historySize)
-
-	return avg
-}
-
-func (pmd *PerformanceMonitorData) calculateAverageUpdateDuration() time.Duration {
-	var sum time.Duration
-	for _, updateDuration := range pmd.UpdateDurationHistory {
-		sum += updateDuration
-	}
-	return sum / historySize
-}
-
-func (pmd *PerformanceMonitorData) calculateAverageRenderDuration() time.Duration {
-	var sum time.Duration
-	for _, renderDuration := range pmd.RenderDurationHistory {
-		sum += renderDuration
-	}
-	return sum / historySize
-}
-
-func (pmd *PerformanceMonitorData) calculateAverageTotalDuration() time.Duration {
-	var sum time.Duration
-	for _, totalDuration := range pmd.TotalDurationHistory {
-		sum += totalDuration
-	}
-	return sum / historySize
-}
-
 func (pm *PerformanceMonitor) Draw(pmd *PerformanceMonitorData) {
 
 	// Define the Performance Monitor panel position and size relative to the editor
@@ -173,6 +138,41 @@ func (pm *PerformanceMonitor) Draw(pmd *PerformanceMonitorData) {
 
 	// Draw Update Duration Graph
 	drawGraph("Update (us)", convertDurationsToInt32(pm.PerformanceMonitorData.UpdateDurationHistory[:]), int32(performanceMonitorRect.X+10), int32(performanceMonitorRect.Y+300), 280, 100, raylib.Red)
+}
+
+func (pmd *PerformanceMonitorData) calculateAverageFPS() float64 {
+	var sum int32
+	for _, fps := range pmd.FPSHistory {
+		sum += fps
+	}
+
+	avg := float64(sum) / float64(historySize)
+
+	return avg
+}
+
+func (pmd *PerformanceMonitorData) calculateAverageUpdateDuration() time.Duration {
+	var sum time.Duration
+	for _, updateDuration := range pmd.UpdateDurationHistory {
+		sum += updateDuration
+	}
+	return sum / historySize
+}
+
+func (pmd *PerformanceMonitorData) calculateAverageRenderDuration() time.Duration {
+	var sum time.Duration
+	for _, renderDuration := range pmd.RenderDurationHistory {
+		sum += renderDuration
+	}
+	return sum / historySize
+}
+
+func (pmd *PerformanceMonitorData) calculateAverageTotalDuration() time.Duration {
+	var sum time.Duration
+	for _, totalDuration := range pmd.TotalDurationHistory {
+		sum += totalDuration
+	}
+	return sum / historySize
 }
 
 // Helper function to draw a simple line graph
@@ -250,74 +250,3 @@ func convertDurationsToInt32(durations []time.Duration) []int32 {
 	}
 	return result
 }
-
-/* OLD
-
-// Define the Performance Monitor panel position and size relative to the editor
-performanceMonitorRect := raylib.Rectangle{
-	X:      pm.LayoutPosition.X,
-	Y:      pm.LayoutPosition.Y,
-	Width:  300,
-	Height: 300,
-}
-
-// Draw the Performance Monitor panel
-raygui.Panel(performanceMonitorRect, "Performance Monitor")
-
-// Define the position for the FPS label witihn the panel
-fpsLabelRect := raylib.Rectangle{
-	X:      performanceMonitorRect.X + 10,
-	Y:      performanceMonitorRect.Y + 40,
-	Width:  200,
-	Height: 20,
-}
-
-// Display the FPS
-fpsDisplayText := "FPS: " + strconv.Itoa(int(pmd.FPS))
-
-// Draw the FPS label
-raygui.Label(fpsLabelRect, fpsDisplayText)
-
-// Define the position for the Update Duration label within the panel
-updateDurationLabelRect := raylib.Rectangle{
-	X:      performanceMonitorRect.X + 10,
-	Y:      performanceMonitorRect.Y + 70,
-	Width:  200,
-	Height: 20,
-}
-
-// Display the Update Duration
-updateDurationDisplayText := fmt.Sprintf("Update Duration: %d ns", pmd.UpdateDuration.Nanoseconds())
-
-// Draw the Update Duration label
-raygui.Label(updateDurationLabelRect, updateDurationDisplayText)
-
-// Define the position for the Draw Duration label within the panel
-renderDurationLabelRect := raylib.Rectangle{
-	X:      performanceMonitorRect.X + 10,
-	Y:      performanceMonitorRect.Y + 100,
-	Width:  200,
-	Height: 20,
-}
-
-// Display the Render Duration
-renderDurationDisplayText := fmt.Sprintf("Render Duration: %d ns", pmd.RenderDuration.Nanoseconds())
-
-// Draw the Draw Duration label
-raygui.Label(renderDurationLabelRect, renderDurationDisplayText)
-
-// Define the position for the Total Duration label within the panel
-totalDurationLabelRect := raylib.Rectangle{
-	X:      performanceMonitorRect.X + 10,
-	Y:      performanceMonitorRect.Y + 130,
-	Width:  200,
-	Height: 20,
-}
-
-// Display the Total Duration
-totalDurationDisplayText := fmt.Sprintf("Total Duration: %d ns", pmd.TotalDuration.Nanoseconds())
-
-// Draw the Total Duration label
-raygui.Label(totalDurationLabelRect, totalDurationDisplayText)
-
-*/
