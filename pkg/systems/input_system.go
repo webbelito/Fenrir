@@ -14,6 +14,7 @@ type InputSystem struct {
 	Editor            *editor.Editor
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
+	systemsManager    *ecs.SystemsManager
 }
 
 func (is *InputSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
@@ -39,6 +40,9 @@ func (is *InputSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.Compo
 
 	// Handle rigid body spawner
 	is.handleRigidBodySpawner()
+
+	// Handle QuadTree rendering
+	is.handleQuadTreeRendering()
 }
 
 func (is *InputSystem) handlePlayerMovmentInput() {
@@ -152,5 +156,11 @@ func (is *InputSystem) handleRigidBodySpawner() {
 			IsStatic:     false,
 		})
 
+	}
+}
+
+func (is *InputSystem) handleQuadTreeRendering() {
+	if raylib.IsKeyPressed(raylib.KeyF2) {
+		// TODO: Find a way to retrieve the collision system from the ECSManager
 	}
 }

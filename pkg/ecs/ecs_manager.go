@@ -43,6 +43,13 @@ func (em *ECSManager) AddSystem(system System, priority int) {
 	em.systemsManager.AddSystem(system, priority)
 }
 
+// TODO: Implement this
+/*
+func (em *ECSManager) GetSystemOfType(systemType SystemType) System {
+	return em.systemsManager.GetSystem(systemType)
+}
+*/
+
 func (em *ECSManager) Update(dt float64) {
 	em.systemsManager.Update(dt, em.entitiesManager, em.componentsManager)
 }

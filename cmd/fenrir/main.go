@@ -55,14 +55,17 @@ func main() {
 	ecsManager.AddSystem(rigidBodySystem, 3)
 
 	// Initialize the CollisionSystem
-
 	quadBoundary := phsyics.Rectangle{
 		Position: raylib.NewVector2(0, 0),
 		Width:    float32(raylib.GetScreenWidth()),
 		Height:   float32(raylib.GetScreenHeight()),
 	}
 
-	collisionSystem := phsyicssystems.NewCollisionSystem(quadBoundary, 4)
+	csCapacity := int32(4)
+	maxDepth := int32(5)
+	capacityDepth := int32(0)
+
+	collisionSystem := phsyicssystems.NewCollisionSystem(quadBoundary, csCapacity, maxDepth, capacityDepth)
 	ecsManager.AddSystem(collisionSystem, 4)
 
 	// Create a player entity
@@ -89,7 +92,7 @@ func main() {
 	})
 	ecsManager.AddComponent(player.ID, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
 		Type: "Square",
-		Size: raylib.NewVector2(15, 15),
+		Size: raylib.NewVector2(16, 16),
 	})
 
 	for i := 0; i < 100; i++ {

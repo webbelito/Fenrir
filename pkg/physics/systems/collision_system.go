@@ -29,13 +29,15 @@ const (
 )
 
 type CollisionSystem struct {
-	quadTree *physics.QuadTree
-	csMutex  sync.RWMutex
+	quadTree             *physics.QuadTree
+	csMutex              sync.RWMutex
+	ShouldRenderQuadTree bool
 }
 
-func NewCollisionSystem(b physics.Rectangle, c int32) *CollisionSystem {
+func NewCollisionSystem(b physics.Rectangle, c int32, mD int32, cD int32) *CollisionSystem {
 	return &CollisionSystem{
-		quadTree: physics.NewQuadTree(b, c),
+		quadTree:             physics.NewQuadTree(b, c, mD, cD),
+		ShouldRenderQuadTree: false,
 	}
 }
 
@@ -61,7 +63,7 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	// Initialize or reset the QuadTree
 	cs.csMutex.Lock()
 	cs.quadTree.Clear()
-	cs.quadTree = physics.NewQuadTree(boundry, cs.quadTree.Capacity)
+	cs.quadTree = physics.NewQuadTree(boundry, cs.quadTree.Capacity, cs.quadTree.MaxDepth, cs.quadTree.CurrentDepth)
 	cs.csMutex.Unlock()
 
 	// Retrieve entities with the required components
@@ -143,6 +145,52 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 			cs.handleBoxToBoxCollision(eID, otherID, cm)
 		}
 	}
+
+	// TODO: Remove the handleInput to the Input Manager
+	// Handle input to toggle the QuadTree rendering
+	if raylib.IsKeyPressed(raylib.KeyQ) {
+		cs.ToggleQuadTreeRender()
+	}
+}
+
+func (cs *CollisionSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
+	if !cs.ShouldRenderQuadTree {
+		return
+	}
+
+	cs.csMutex.RLock()
+	defer cs.csMutex.RUnlock()
+
+	// Traverse the QuadTree and render the nodes
+	cs.drawQuadTreeNode(cs.quadTree, cs.quadTree.CurrentDepth, raylib.Green)
+}
+
+func (cs *CollisionSystem) drawQuadTreeNode(qt *physics.QuadTree, cD int32, bC raylib.Color) {
+
+	if qt == nil {
+		return
+	}
+
+	// Draw the boundry of the QuadTree node
+	raylib.DrawRectangleLines(
+		int32(qt.Boundry.Position.X),
+		int32(qt.Boundry.Position.Y),
+		int32(qt.Boundry.Width),
+		int32(qt.Boundry.Height),
+		bC,
+	)
+
+	// Recursively draw the children
+	if qt.Divided {
+		cs.drawQuadTreeNode(qt.NW, cD+1, bC)
+		cs.drawQuadTreeNode(qt.NE, cD+1, bC)
+		cs.drawQuadTreeNode(qt.SW, cD+1, bC)
+		cs.drawQuadTreeNode(qt.SE, cD+1, bC)
+	}
+}
+
+func (cs *CollisionSystem) ToggleQuadTreeRender() {
+	cs.ShouldRenderQuadTree = !cs.ShouldRenderQuadTree
 }
 
 func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, eB uint64, cm *ecs.ComponentsManager) {

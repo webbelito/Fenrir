@@ -30,23 +30,27 @@ func (r *Rectangle) Intersects(other *Rectangle) bool {
 
 // QuadTree represents a node in the QuadTree
 type QuadTree struct {
-	Boundry  Rectangle
-	Capacity int32
-	Entities []uint64
-	Divided  bool
-	NE       *QuadTree
-	NW       *QuadTree
-	SE       *QuadTree
-	SW       *QuadTree
+	Boundry      Rectangle
+	Capacity     int32
+	Entities     []uint64
+	Divided      bool
+	MaxDepth     int32
+	CurrentDepth int32
+	NE           *QuadTree
+	NW           *QuadTree
+	SE           *QuadTree
+	SW           *QuadTree
 }
 
 // NewQuadTree initializes a new QuadTree node
-func NewQuadTree(b Rectangle, c int32) *QuadTree {
+func NewQuadTree(b Rectangle, c int32, mD int32, cD int32) *QuadTree {
 	return &QuadTree{
-		Boundry:  b,
-		Capacity: c,
-		Entities: make([]uint64, 0, c),
-		Divided:  false,
+		Boundry:      b,
+		Capacity:     c,
+		Entities:     make([]uint64, 0, c),
+		Divided:      false,
+		MaxDepth:     mD,
+		CurrentDepth: cD,
 	}
 }
 
@@ -57,10 +61,10 @@ func (qt *QuadTree) Subdivide() {
 	x := qt.Boundry.Position.X
 	y := qt.Boundry.Position.Y
 
-	qt.NE = NewQuadTree(Rectangle{raylib.NewVector2(x+halfWidth, y), halfWidth, halfHeight}, qt.Capacity)
-	qt.NW = NewQuadTree(Rectangle{raylib.NewVector2(x, y), halfWidth, halfHeight}, qt.Capacity)
-	qt.SE = NewQuadTree(Rectangle{raylib.NewVector2(x+halfWidth, y+halfHeight), halfWidth, halfHeight}, qt.Capacity)
-	qt.SW = NewQuadTree(Rectangle{raylib.NewVector2(x, y+halfHeight), halfWidth, halfHeight}, qt.Capacity)
+	qt.NE = NewQuadTree(Rectangle{raylib.NewVector2(x+halfWidth, y), halfWidth, halfHeight}, qt.Capacity, qt.MaxDepth, qt.CurrentDepth+1)
+	qt.NW = NewQuadTree(Rectangle{raylib.NewVector2(x, y), halfWidth, halfHeight}, qt.Capacity, qt.MaxDepth, qt.CurrentDepth+1)
+	qt.SE = NewQuadTree(Rectangle{raylib.NewVector2(x+halfWidth, y+halfHeight), halfWidth, halfHeight}, qt.Capacity, qt.MaxDepth, qt.CurrentDepth+1)
+	qt.SW = NewQuadTree(Rectangle{raylib.NewVector2(x, y+halfHeight), halfWidth, halfHeight}, qt.Capacity, qt.MaxDepth, qt.CurrentDepth+1)
 
 	qt.Divided = true
 }
@@ -86,6 +90,11 @@ func (qt *QuadTree) Insert(eID uint64, p raylib.Vector2) bool {
 
 	// Subdivide if capacity is exceeded and not already divided
 	if !qt.Divided {
+		if qt.CurrentDepth >= qt.MaxDepth {
+			// We've reached the maximum depth, do not subdivide
+			qt.Entities = append(qt.Entities, eID)
+			return true
+		}
 		qt.Subdivide()
 	}
 
