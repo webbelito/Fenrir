@@ -9,4 +9,5 @@ const (
 	SpeedComponent
 	PlayerComponent
 	VelocityComponent
+	SpriteComponent
 )

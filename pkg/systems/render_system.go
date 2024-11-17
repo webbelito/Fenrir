@@ -5,6 +5,7 @@ import (
 
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/resources"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
@@ -15,6 +16,7 @@ type RenderSystem struct {
 	Entities          []EntityData
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
+	recourcesManager  *resources.ResourcesManager
 }
 
 type EntityData struct {
@@ -23,12 +25,14 @@ type EntityData struct {
 	Rotation float32
 	Scale    raylib.Vector2
 	Color    raylib.Color
+	Sprite   *components.Sprite
 }
 
-func NewRenderSystem(screenBounds raylib.Rectangle) *RenderSystem {
+func NewRenderSystem(screenBounds raylib.Rectangle, rm *resources.ResourcesManager) *RenderSystem {
 	return &RenderSystem{
 		ScreenCullingRect: screenBounds,
 		Entities:          []EntityData{},
+		recourcesManager:  rm,
 	}
 }
 
@@ -55,6 +59,7 @@ func (rs *RenderSystem) RenderEntities() {
 
 	transformComps, transformCompsExists := rs.componentsManager.Components[ecs.Transform2DComponent]
 	colorComps, colorCompsExists := rs.componentsManager.Components[ecs.ColorComponent]
+	spriteComps := rs.componentsManager.Components[ecs.SpriteComponent]
 
 	if !transformCompsExists || !colorCompsExists {
 		return
@@ -63,18 +68,34 @@ func (rs *RenderSystem) RenderEntities() {
 	// Clear the entities slice while retaining capacity
 	rs.Entities = rs.Entities[:0]
 
-	// Collect entites that have both Position and Color components
-	for entity, pos := range transformComps {
-		transform, _ := pos.(*components.Transform2D)
-		colorComp, colorCompExists := colorComps[entity].(*components.Color)
+	// Collect entities that have Position , Color and Sprite components
+	entities := rs.componentsManager.GetEntitiesWithComponents([]ecs.ComponentType{
+		ecs.Transform2DComponent,
+		ecs.ColorComponent,
+	})
 
-		if !colorCompExists {
-			continue
-		}
+	for _, entity := range entities {
+		transform, _ := transformComps[entity].(*components.Transform2D)
+		colorComp, _ := colorComps[entity].(*components.Color)
+
+		// Check if the entity has a Sprite component
+		spriteComp, spriteExists := spriteComps[entity].(*components.Sprite)
 
 		// Check if the entity is within the screen bounds
 		if !raylib.CheckCollisionPointRec(transform.Position, rs.ScreenCullingRect) {
 			continue
+		}
+
+		// Add the entity to the slice if it does not have a sprite component
+		if !spriteExists {
+			rs.Entities = append(rs.Entities, EntityData{
+				ID:       entity,
+				Position: transform.Position,
+				Rotation: transform.Rotation,
+				Scale:    transform.Scale,
+				Color:    colorComp.Color,
+				Sprite:   nil,
+			})
 		}
 
 		// Add the entity to the slice
@@ -84,8 +105,8 @@ func (rs *RenderSystem) RenderEntities() {
 			Rotation: transform.Rotation,
 			Scale:    transform.Scale,
 			Color:    colorComp.Color,
+			Sprite:   spriteComp,
 		})
-
 	}
 
 	// Sort entities by ID to ensure consistent rendering order
@@ -95,6 +116,42 @@ func (rs *RenderSystem) RenderEntities() {
 
 	// Render entities
 	for _, entity := range rs.Entities {
-		raylib.DrawRectangleV(entity.Position, entity.Scale, entity.Color)
+		if entity.Sprite == nil {
+			// Fallback to rendering a rectangle if the sprite is nil
+			raylib.DrawRectangleV(entity.Position, entity.Scale, entity.Color)
+			continue
+		}
+
+		// Retrieve the texture from the Resources Manager
+		texture, texExists := rs.recourcesManager.GetTexture(entity.Sprite.TexturePath)
+
+		if !texExists {
+
+			// Attempt to load the texture if not already loaded
+			_, err := rs.recourcesManager.LoadTexture(entity.Sprite.TexturePath)
+			if err != nil {
+				utils.ErrorLogger.Printf("RenderSystem: Failed to load texture: %s\n", entity.Sprite.TexturePath)
+				continue
+			}
+		}
+
+		// Define source and destination rectangles
+		sourceRect := entity.Sprite.SourceRect
+		destRect := raylib.Rectangle{
+			X:      entity.Position.X,
+			Y:      entity.Position.Y,
+			Width:  entity.Scale.X,
+			Height: entity.Scale.Y,
+		}
+
+		// Draw the sprite
+		raylib.DrawTexturePro(
+			texture,
+			sourceRect,
+			destRect,
+			entity.Sprite.Origin,
+			entity.Rotation,
+			entity.Color,
+		)
 	}
 }

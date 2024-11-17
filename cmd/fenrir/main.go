@@ -5,6 +5,7 @@ import (
 
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/resources"
 
 	"github.com/webbelito/Fenrir/pkg/editor"
 
@@ -25,6 +26,9 @@ func main() {
 
 	raylib.SetTargetFPS(60)
 
+	// Initialize the Resources Manager
+	resourcesManager := resources.NewResourceManager()
+
 	// Initialize ECS Manager
 	ecsManager := ecs.NewECSManager()
 
@@ -39,13 +43,17 @@ func main() {
 
 	ecsManager.AddSystem(&systems.MovementSystem{}, 1)
 
+	// Initialize the RenderSystem
 	// TODO: Implement a camera and follow the position of the camera with the screen culling rect
-	ecsManager.AddSystem(&systems.RenderSystem{ScreenCullingRect: raylib.Rectangle{
+	renderSystem := systems.NewRenderSystem(raylib.Rectangle{
 		X:      0,
 		Y:      0,
 		Width:  float32(raylib.GetScreenWidth()),
 		Height: float32(raylib.GetScreenHeight()),
-	}}, 2)
+	}, resourcesManager)
+
+	// Add the RenderSystem to the ECS Manager
+	ecsManager.AddSystem(renderSystem, 2)
 
 	// Initialize the gravity vector (pixels per second i.e 980 pixels per second)
 	gravity := raylib.NewVector2(0, 980)
@@ -74,9 +82,9 @@ func main() {
 	ecsManager.AddComponent(player.ID, ecs.Transform2DComponent, &components.Transform2D{
 		Position: raylib.NewVector2(100, 100),
 		Rotation: 0,
-		Scale:    raylib.NewVector2(15, 15),
+		Scale:    raylib.NewVector2(32, 32),
 	})
-	ecsManager.AddComponent(player.ID, ecs.ColorComponent, &components.Color{Color: raylib.Red})
+	ecsManager.AddComponent(player.ID, ecs.ColorComponent, &components.Color{Color: raylib.White})
 	ecsManager.AddComponent(player.ID, ecs.PlayerComponent, &components.Player{Name: "Webbelito"})
 
 	// Add RigidBody component to the player entity
@@ -92,7 +100,16 @@ func main() {
 	})
 	ecsManager.AddComponent(player.ID, ecs.BoxColliderComponent, &phsyicscomponents.BoxCollider{
 		Type: "Square",
-		Size: raylib.NewVector2(16, 16),
+		Size: raylib.NewVector2(32, 32),
+	})
+
+	ecsManager.AddComponent(player.ID, ecs.SpriteComponent, &components.Sprite{
+		TexturePath: "assets/images/player.png",
+		SourceRect:  raylib.NewRectangle(0, 0, 32, 32),
+		DestRect:    raylib.NewRectangle(100, 100, 32, 32),
+		Origin:      raylib.NewVector2(0, 0),
+		Rotation:    0,
+		Color:       raylib.White,
 	})
 
 	for i := 0; i < 100; i++ {
@@ -124,7 +141,6 @@ func main() {
 			Type: "Square",
 			Size: raylib.NewVector2(15, 15),
 		})
-
 	}
 	// Main game loop
 	for !raylib.WindowShouldClose() {
