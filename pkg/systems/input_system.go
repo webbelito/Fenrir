@@ -14,7 +14,6 @@ type InputSystem struct {
 	Editor            *editor.Editor
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
-	systemsManager    *ecs.SystemsManager
 }
 
 func (is *InputSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {

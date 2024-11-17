@@ -165,8 +165,20 @@ func main() {
 		// Calculate the total time taken for the update and render steps
 		totalDuration := time.Since(updateStart)
 
+		// Update Performance Monitor
+		currentFPS := raylib.GetFPS()
+		perfMonitorData := &editor.PerformanceMonitorData{
+			FPS:            currentFPS,
+			UpdateDuration: updateDuration,
+			RenderDuration: renderDuration,
+			TotalDuration:  totalDuration,
+		}
+
+		// Update the Performance Monitor
+		gameEditor.Update(perfMonitorData)
+
 		// Render Editor Overlay
-		gameEditor.Draw(&editor.PerformanceMonitorData{FPS: raylib.GetFPS(), UpdateDuration: updateDuration, RenderDuration: renderDuration, TotalDuration: totalDuration})
+		gameEditor.Draw(perfMonitorData)
 
 		// End drawing
 		raylib.EndDrawing()

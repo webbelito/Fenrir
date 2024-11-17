@@ -33,10 +33,13 @@ func (e *Editor) ToggleVisibility() {
 	e.Visible = !e.Visible
 }
 
-func (e *Editor) Update() {
+func (e *Editor) Update(pmd *PerformanceMonitorData) {
 	if e.Visible {
 		// Handle editor specific logic here
 		e.WorldInspector.Update()
+
+		// Update the Performance Monitor
+		e.PerformanceMonitor.Update(pmd)
 	}
 }
 
