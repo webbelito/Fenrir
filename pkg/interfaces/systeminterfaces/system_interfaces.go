@@ -1,4 +1,4 @@
-package system_interfaces
+package systeminterfaces
 
 type Updatable interface {
 	Update(dt float64)

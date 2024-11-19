@@ -9,7 +9,7 @@ import (
 )
 
 type MainMenuScene struct {
-	sceceManager *SceneManager
+	sceneManager *SceneManager
 	ecsManager   *ecs.ECSManager
 	sceneData    *SceneData
 
@@ -18,7 +18,7 @@ type MainMenuScene struct {
 
 func NewMainMenuScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *MainMenuScene {
 	return &MainMenuScene{
-		sceceManager: sm,
+		sceneManager: sm,
 		ecsManager:   em,
 		sceneData:    sd,
 		entities:     []*ecs.Entity{},
@@ -33,7 +33,7 @@ func (mms *MainMenuScene) Init() {
 func (mms *MainMenuScene) Update(dt float64) {
 	// TODO: Remove temporary input handling
 	if raylib.IsKeyPressed(raylib.KeyEnter) {
-		err := mms.sceceManager.ChangeScene("assets/scenes/game_scene.json")
+		err := mms.sceneManager.ChangeScene("assets/scenes/game_scene.json")
 		if err != nil {
 			utils.ErrorLogger.Println("Failed to change scene: ", err)
 		}
@@ -41,7 +41,7 @@ func (mms *MainMenuScene) Update(dt float64) {
 
 	// TODO: Remove temporary input handling
 	if raylib.IsKeyPressed(raylib.KeyEscape) {
-		raylib.CloseWindow()
+		mms.sceneManager.ExitGame()
 	}
 }
 
@@ -56,14 +56,14 @@ func (mms *MainMenuScene) Render() {
 
 	if raygui.Button(raylib.NewRectangle(700, 400, 200, 50), "Start Game") {
 
-		err := mms.sceceManager.ChangeScene("assets/scenes/game_scene.json")
+		err := mms.sceneManager.ChangeScene("assets/scenes/game_scene.json")
 		if err != nil {
 			utils.ErrorLogger.Println("Failed to change scene: ", err)
 		}
 	}
 
 	if raygui.Button(raylib.NewRectangle(700, 500, 200, 50), "Exit Game") {
-		raylib.CloseWindow()
+		mms.sceneManager.ExitGame()
 	}
 
 }

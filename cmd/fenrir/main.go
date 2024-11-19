@@ -29,27 +29,41 @@ func main() {
 
 	// Initialize Scene Manager
 	sceneManager := scenes.NewSceneManager(ecsManager)
-
-	// Set Initial Scene to Main Menu
-	err := sceneManager.ChangeScene("assets/scenes/main_menu.json")
-	if err != nil {
-		utils.ErrorLogger.Fatalf("Failed to change scene: %v", err)
-	}
+	sceneManager.PushScene("assets/scenes/main_menu.json")
 
 	// Disable the Escape key from closing the window
 	raylib.SetExitKey(0)
 
 	// Main game loop
-	for !raylib.WindowShouldClose() {
+	for !raylib.WindowShouldClose() && !sceneManager.ShouldExitGame() {
 
 		// Get frame time
 		deltaTime := raylib.GetFrameTime()
 
-		// Update Scene Manager
-		sceneManager.Update(float64(deltaTime))
+		currentScene := sceneManager.GetCurrentScene()
+
+		if currentScene != nil {
+
+			// Update Current Scene
+			currentScene.Update(float64(deltaTime))
+
+			ecsManager.UpdateLogicSystems(float64(deltaTime))
+		}
+
+		// Apply any pending scene changes
+		if sceneManager.ShouldChangeScene() {
+			err := sceneManager.ApplyPendingSceneChange()
+			if err != nil {
+				utils.ErrorLogger.Fatalf("Failed to apply pending scene change: %v", err)
+			}
+		}
 
 		raylib.BeginDrawing()
 		raylib.ClearBackground(raylib.Black)
+
+		if currentScene != nil {
+			currentScene.Render()
+		}
 
 		// Render Current Scene
 		sceneManager.Render()

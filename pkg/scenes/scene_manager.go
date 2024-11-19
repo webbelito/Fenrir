@@ -8,14 +8,18 @@ import (
 )
 
 type SceneManager struct {
-	scenes     []Scene
-	ecsManager *ecs.ECSManager
+	scenes           []Scene
+	ecsManager       *ecs.ECSManager
+	shouldExitGame   bool
+	pendingScenePath string
+	pendingChange    bool
 }
 
 func NewSceneManager(ecsManager *ecs.ECSManager) *SceneManager {
 	return &SceneManager{
-		scenes:     []Scene{},
-		ecsManager: ecsManager,
+		scenes:         []Scene{},
+		ecsManager:     ecsManager,
+		shouldExitGame: false,
 	}
 }
 
@@ -79,6 +83,47 @@ func (sm *SceneManager) ChangeScene(sceneFilePath string) error {
 
 	// Load and initialize the new scene
 	return sm.PushScene(sceneFilePath)
+}
+
+func (sm *SceneManager) GetCurrentScene() Scene {
+	if len(sm.scenes) == 0 {
+		return nil
+	}
+
+	return sm.scenes[len(sm.scenes)-1]
+}
+
+func (sm *SceneManager) SetCurrentScene(sceneFilePath string) error {
+	sm.pendingScenePath = sceneFilePath
+	sm.pendingChange = true
+	return nil
+}
+
+func (sm *SceneManager) ShouldExitGame() bool {
+	return sm.shouldExitGame
+}
+
+func (sm *SceneManager) ExitGame() {
+	sm.shouldExitGame = true
+}
+
+func (sm *SceneManager) ShouldChangeScene() bool {
+	return sm.pendingChange
+}
+
+func (sm *SceneManager) ApplyPendingSceneChange() error {
+	if sm.pendingChange {
+
+		err := sm.ChangeScene(sm.pendingScenePath)
+		if err != nil {
+			return err
+		}
+
+		sm.pendingChange = false
+		sm.pendingScenePath = ""
+
+	}
+	return nil
 }
 
 func (sm *SceneManager) Update(dt float64) {
