@@ -2,6 +2,7 @@ package scenes
 
 import (
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raygui "github.com/gen2brain/raylib-go/raygui"
@@ -13,15 +14,19 @@ type PauseScene struct {
 	ecsManager   *ecs.ECSManager
 	sceneData    *SceneData
 
-	entities []*ecs.Entity
+	entities      []*ecs.Entity
+	logicSystems  []systeminterfaces.Updatable
+	renderSystems []systeminterfaces.Renderable
 }
 
 func NewPauseScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *PauseScene {
 	return &PauseScene{
-		sceneManager: sm,
-		ecsManager:   em,
-		sceneData:    sd,
-		entities:     []*ecs.Entity{},
+		sceneManager:  sm,
+		ecsManager:    em,
+		sceneData:     sd,
+		entities:      []*ecs.Entity{},
+		logicSystems:  []systeminterfaces.Updatable{},
+		renderSystems: []systeminterfaces.Renderable{},
 	}
 }
 

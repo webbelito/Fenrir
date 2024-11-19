@@ -72,7 +72,7 @@ func (is *InputSystem) handlePlayerMovementInput() {
 		}
 
 		// Define the movement force
-		movementForce := float32(2000.0)
+		movementForce := float32(1300.0)
 
 		// Initialize the movement vector
 		force := raylib.NewVector2(0, 0)

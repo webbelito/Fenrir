@@ -6,12 +6,12 @@ import (
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/editor"
+	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
 	"github.com/webbelito/Fenrir/pkg/physics"
 	physicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
 	physicssystems "github.com/webbelito/Fenrir/pkg/physics/systems"
 	"github.com/webbelito/Fenrir/pkg/resources"
 	"github.com/webbelito/Fenrir/pkg/systems"
-
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
@@ -23,7 +23,9 @@ type GameScene struct {
 	sceneData    *SceneData
 	perfMonitor  *editor.PerformanceMonitor
 
-	entities []*ecs.Entity
+	entities      []*ecs.Entity
+	logicSystems  []systeminterfaces.Updatable
+	renderSystems []systeminterfaces.Renderable
 
 	// Performance Metrics
 	updateDuration time.Duration
@@ -40,6 +42,8 @@ func NewGameScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *GameScen
 		renderDuration: 0,
 		totalDuration:  0,
 		entities:       []*ecs.Entity{},
+		logicSystems:   []systeminterfaces.Updatable{},
+		renderSystems:  []systeminterfaces.Renderable{},
 	}
 }
 
@@ -55,11 +59,17 @@ func (gs *GameScene) Init() {
 	gs.perfMonitor = editor.NewPerformanceMonitor(raylib.NewVector2(1600, 10))
 
 	// Initialize System specific to GameScene
-	gs.ecsManager.AddLogicSystem(systems.NewInputSystem(
+	inputSystem := systems.NewInputSystem(
 		gs.ecsManager,
 		gameEditor,
-	), 0)
-	gs.ecsManager.AddLogicSystem(systems.NewMovementSystem(gs.ecsManager), 1)
+	)
+
+	gs.ecsManager.AddLogicSystem(inputSystem, 0)
+	gs.logicSystems = append(gs.logicSystems, inputSystem)
+
+	movementSystem := systems.NewMovementSystem(gs.ecsManager)
+	gs.ecsManager.AddLogicSystem(movementSystem, 1)
+	gs.logicSystems = append(gs.logicSystems, movementSystem)
 
 	// Add more systems as needed...
 
@@ -69,6 +79,7 @@ func (gs *GameScene) Init() {
 	// Initialize the RigidBodySystem
 	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.ecsManager, gravity)
 	gs.ecsManager.AddLogicSystem(rigidBodySystem, 2)
+	gs.logicSystems = append(gs.logicSystems, rigidBodySystem)
 
 	// Initialize the CollisionSystem
 	quadBoundary := physics.Rectangle{
@@ -83,8 +94,11 @@ func (gs *GameScene) Init() {
 
 	collisionSystem := physicssystems.NewCollisionSystem(gs.ecsManager, quadBoundary, csCapacity, maxDepth, capacityDepth)
 	gs.ecsManager.AddLogicSystem(collisionSystem, 3)
+	gs.logicSystems = append(gs.logicSystems, collisionSystem)
 
-	gs.ecsManager.AddRenderSystem(systems.NewRenderSystem(gs.ecsManager, raylib.NewRectangle(0, 0, float32(raylib.GetScreenWidth()), float32(raylib.GetScreenHeight())), resourceManager), 0)
+	renderSystem := systems.NewRenderSystem(gs.ecsManager, raylib.NewRectangle(0, 0, float32(raylib.GetScreenWidth()), float32(raylib.GetScreenHeight())), resourceManager)
+	gs.ecsManager.AddRenderSystem(renderSystem, 0)
+	gs.renderSystems = append(gs.renderSystems, renderSystem)
 
 	// Initialize Entities based on Scene Data
 	gs.initializeEntities()
@@ -140,6 +154,17 @@ func (gs *GameScene) Render() {
 func (gs *GameScene) Cleanup() {
 	// Remove all entities created by this scene
 	gs.RemoveAllEntities()
+
+	// Remove and cleanup logic system
+	for _, system := range gs.logicSystems {
+		gs.ecsManager.RemoveLogicSystem(system)
+	}
+	gs.logicSystems = nil
+
+	// Remove and cleanup render system
+	for _, system := range gs.renderSystems {
+		gs.ecsManager.RemoveRenderSystem(system)
+	}
 
 	// Cleanup resources
 	gs.perfMonitor = nil
