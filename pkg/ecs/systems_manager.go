@@ -1,55 +1,78 @@
 package ecs
 
 import (
-	"sort"
+	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
+	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
-// Represents a system that can be updated, standard interface for all systems
-type System interface {
-	Update(dt float64, em *EntitiesManager, cm *ComponentsManager)
-}
-
-// Represents a system that can be rendered
-type RenderableSystem interface {
-	Render(*EntitiesManager, *ComponentsManager)
-}
-
 type SystemsManager struct {
-	systems []SystemsWithPriority
+	logicSystems  []systeminterfaces.Updatable
+	renderSystems []systeminterfaces.Renderable
 }
 
-type SystemsWithPriority struct {
-	system   System
-	priority int
-}
-
-func NewSystemsManager() *SystemsManager {
+func NewSystemsManager(ecsManager *ECSManager) *SystemsManager {
 	return &SystemsManager{
-		systems: []SystemsWithPriority{},
+		logicSystems:  []systeminterfaces.Updatable{},
+		renderSystems: []systeminterfaces.Renderable{},
 	}
 }
 
-func (sm *SystemsManager) AddSystem(system System, priority int) {
-	sm.systems = append(sm.systems, SystemsWithPriority{system: system, priority: priority})
+func (sm *SystemsManager) AddLogicSystem(system systeminterfaces.Updatable, priority int) {
 
-	// Sort systems by priority
-	sort.SliceStable(sm.systems, func(i, j int) bool {
-		return sm.systems[i].priority < sm.systems[j].priority
-	})
-}
+	inserted := false
 
-func (sm *SystemsManager) Update(dt float64, em *EntitiesManager, cm *ComponentsManager) {
-	for _, swp := range sm.systems {
-		swp.system.Update(dt, em, cm)
+	// TODO: Implement priority
+
+	if !inserted {
+		sm.logicSystems = append(sm.logicSystems, system)
 	}
+
+	utils.InfoLogger.Printf("Added logic system: %T\n", system)
+
 }
 
-func (sm *SystemsManager) Render(em *EntitiesManager, cm *ComponentsManager) {
-
-	// Render only on systems that is of type RenderableSystem
-	for _, swp := range sm.systems {
-		if rs, ok := swp.system.(RenderableSystem); ok {
-			rs.Render(em, cm)
+func (sm *SystemsManager) RemoveLogicSystem(system systeminterfaces.Updatable) {
+	for i, sys := range sm.logicSystems {
+		if sys == system {
+			sm.logicSystems = append(sm.logicSystems[:i], sm.logicSystems[i+1:]...)
+			utils.InfoLogger.Printf("Removed logic system: %T\n", system)
+			break
 		}
+	}
+}
+
+func (sm *SystemsManager) AddRenderSystem(system systeminterfaces.Renderable, priority int) {
+
+	inserted := false
+
+	// TODO: Implement priority
+
+	if !inserted {
+		sm.renderSystems = append(sm.renderSystems, system)
+	}
+
+	utils.InfoLogger.Printf("Added render system: %T\n", system)
+
+}
+
+func (sm *SystemsManager) RemoveRenderSystem(system systeminterfaces.Renderable) {
+	for i, sys := range sm.renderSystems {
+		if sys == system {
+			sm.renderSystems = append(sm.renderSystems[:i], sm.renderSystems[i+1:]...)
+			utils.InfoLogger.Printf("Removed render system: %T\n", system)
+			break
+		}
+	}
+}
+
+func (sm *SystemsManager) Update(dt float64) {
+	for _, system := range sm.logicSystems {
+		system.Update(dt)
+	}
+}
+
+func (sm *SystemsManager) Render() {
+	for _, system := range sm.renderSystems {
+		system.Render()
 	}
 }

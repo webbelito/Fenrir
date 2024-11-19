@@ -1,10 +1,9 @@
 package editor
 
 import (
-	"github.com/webbelito/Fenrir/pkg/ecs"
-
 	raygui "github.com/gen2brain/raylib-go/raygui"
 	raylib "github.com/gen2brain/raylib-go/raylib"
+	"github.com/webbelito/Fenrir/pkg/ecs"
 )
 
 type Editor struct {

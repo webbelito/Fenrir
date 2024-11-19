@@ -32,18 +32,24 @@ type CollisionSystem struct {
 	quadTree             *physics.QuadTree
 	csMutex              sync.RWMutex
 	ShouldRenderQuadTree bool
+	ecsManager           *ecs.ECSManager
+	entitesManager       *ecs.EntitiesManager
+	componentsManager    *ecs.ComponentsManager
 }
 
-func NewCollisionSystem(b physics.Rectangle, c int32, mD int32, cD int32) *CollisionSystem {
+func NewCollisionSystem(ecsM *ecs.ECSManager, b physics.Rectangle, c int32, mD int32, cD int32) *CollisionSystem {
 	return &CollisionSystem{
 		quadTree:             physics.NewQuadTree(b, c, mD, cD),
 		ShouldRenderQuadTree: false,
+		ecsManager:           ecsM,
+		entitesManager:       ecsM.GetEntitiesManager(),
+		componentsManager:    ecsM.GetComponentsManager(),
 	}
 }
 
-func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
+func (cs *CollisionSystem) Update(dt float64) {
 
-	if em == nil || cm == nil {
+	if cs.ecsManager == nil || cs.entitesManager == nil || cs.componentsManager == nil {
 		utils.ErrorLogger.Println("CollisionSystem: EntitiesManager or ComponentsManager is nil")
 		return
 	}
@@ -67,14 +73,14 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	cs.csMutex.Unlock()
 
 	// Retrieve entities with the required components
-	entities := cm.GetEntitiesWithComponents([]ecs.ComponentType{
+	entities := cs.componentsManager.GetEntitiesWithComponents([]ecs.ComponentType{
 		ecs.Transform2DComponent,
 		ecs.BoxColliderComponent,
 	})
 
 	// Insert entities into the QuadTree
 	for _, entity := range entities {
-		transformComp, transCompExists := cm.GetComponent(entity, ecs.Transform2DComponent)
+		transformComp, transCompExists := cs.componentsManager.GetComponent(entity, ecs.Transform2DComponent)
 		if !transCompExists {
 			continue
 		}
@@ -96,7 +102,7 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	for _, eID := range entities {
 
 		// Get Transform2D component
-		transformComp, transCompExists := cm.GetComponent(eID, ecs.Transform2DComponent)
+		transformComp, transCompExists := cs.componentsManager.GetComponent(eID, ecs.Transform2DComponent)
 		if !transCompExists {
 			continue
 		}
@@ -108,7 +114,7 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 		}
 
 		// Get the BoxCollider component
-		colliderComp, colliderCompExists := cm.GetComponent(eID, ecs.BoxColliderComponent)
+		colliderComp, colliderCompExists := cs.componentsManager.GetComponent(eID, ecs.BoxColliderComponent)
 		if !colliderCompExists {
 			continue
 		}
@@ -142,7 +148,7 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 			}
 
 			// Check for Box to Box collision
-			cs.handleBoxToBoxCollision(eID, otherID, cm)
+			cs.handleBoxToBoxCollision(eID, otherID)
 		}
 	}
 
@@ -153,7 +159,7 @@ func (cs *CollisionSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.C
 	}
 }
 
-func (cs *CollisionSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
+func (cs *CollisionSystem) Render() {
 	if !cs.ShouldRenderQuadTree {
 		return
 	}
@@ -193,21 +199,21 @@ func (cs *CollisionSystem) ToggleQuadTreeRender() {
 	cs.ShouldRenderQuadTree = !cs.ShouldRenderQuadTree
 }
 
-func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, eB uint64, cm *ecs.ComponentsManager) {
+func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, eB uint64) {
 
 	// Get the components for entity A
-	transformA, transformAExists := cm.GetComponent(eA, ecs.Transform2DComponent)
-	colliderA, colliderAExists := cm.GetComponent(eA, ecs.BoxColliderComponent)
-	rigidBodyA, rigidbodyAExists := cm.GetComponent(eA, ecs.RigidBodyComponent)
+	transformA, transformAExists := cs.componentsManager.GetComponent(eA, ecs.Transform2DComponent)
+	colliderA, colliderAExists := cs.componentsManager.GetComponent(eA, ecs.BoxColliderComponent)
+	rigidBodyA, rigidbodyAExists := cs.componentsManager.GetComponent(eA, ecs.RigidBodyComponent)
 
 	if !transformAExists || !colliderAExists || !rigidbodyAExists {
 		return
 	}
 
 	// Get the components for entity B
-	transformB, transformBExists := cm.GetComponent(eB, ecs.Transform2DComponent)
-	colliderB, colliderBExists := cm.GetComponent(eB, ecs.BoxColliderComponent)
-	rigidBodyB, rigidBodyBExists := cm.GetComponent(eB, ecs.RigidBodyComponent)
+	transformB, transformBExists := cs.componentsManager.GetComponent(eB, ecs.Transform2DComponent)
+	colliderB, colliderBExists := cs.componentsManager.GetComponent(eB, ecs.BoxColliderComponent)
+	rigidBodyB, rigidBodyBExists := cs.componentsManager.GetComponent(eB, ecs.RigidBodyComponent)
 
 	if !transformBExists || !colliderBExists || !rigidBodyBExists {
 		return

@@ -1,0 +1,8 @@
+{
+    "scene_name": "Pause",
+    "entities": [],
+    "environment": {
+        "background_color": "black",
+        "music": ""
+    }
+}

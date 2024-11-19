@@ -14,9 +14,10 @@ import (
 type RenderSystem struct {
 	ScreenCullingRect raylib.Rectangle
 	Entities          []EntityData
+	ecsManager        *ecs.ECSManager
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
-	recourcesManager  *resources.ResourcesManager
+	resourcesManager  *resources.ResourcesManager
 }
 
 type EntityData struct {
@@ -28,31 +29,25 @@ type EntityData struct {
 	Sprite   *components.Sprite
 }
 
-func NewRenderSystem(screenBounds raylib.Rectangle, rm *resources.ResourcesManager) *RenderSystem {
+func NewRenderSystem(ecsM *ecs.ECSManager, screenBounds raylib.Rectangle, rm *resources.ResourcesManager) *RenderSystem {
 	return &RenderSystem{
 		ScreenCullingRect: screenBounds,
 		Entities:          []EntityData{},
-		recourcesManager:  rm,
+		ecsManager:        ecsM,
+		entitiesManager:   ecsM.GetEntitiesManager(),
+		componentsManager: ecsM.GetComponentsManager(),
+		resourcesManager:  rm,
 	}
 }
 
-func (rs *RenderSystem) Render(em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
-	if em == nil || cm == nil {
-		utils.ErrorLogger.Println("RenderSystem: EntitiesManager or ComponentsManager is nil")
+func (rs *RenderSystem) Render() {
+	if rs.ecsManager == nil || rs.entitiesManager == nil || rs.componentsManager == nil || rs.resourcesManager == nil {
+		utils.ErrorLogger.Println("RenderSystem: ECSManager or EntitiesManager or ComponentsManager or ResourcesManager is nil")
 		return
 	}
 
-	// Assign the entities and components manager to the system
-	rs.entitiesManager = em
-	rs.componentsManager = cm
-
 	rs.RenderEntities()
 
-}
-
-// TODO: Refactor this to not require an update method
-func (rs *RenderSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
-	// Do nothing
 }
 
 func (rs *RenderSystem) RenderEntities() {
@@ -123,12 +118,12 @@ func (rs *RenderSystem) RenderEntities() {
 		}
 
 		// Retrieve the texture from the Resources Manager
-		texture, texExists := rs.recourcesManager.GetTexture(entity.Sprite.TexturePath)
+		texture, texExists := rs.resourcesManager.GetTexture(entity.Sprite.TexturePath)
 
 		if !texExists {
 
 			// Attempt to load the texture if not already loaded
-			_, err := rs.recourcesManager.LoadTexture(entity.Sprite.TexturePath)
+			_, err := rs.resourcesManager.LoadTexture(entity.Sprite.TexturePath)
 			if err != nil {
 				utils.ErrorLogger.Printf("RenderSystem: Failed to load texture: %s\n", entity.Sprite.TexturePath)
 				continue

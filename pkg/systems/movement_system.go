@@ -1,31 +1,33 @@
 package systems
 
 import (
-	raylib "github.com/gen2brain/raylib-go/raylib"
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/utils"
+
+	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
 type MovementSystem struct {
+	ecsManager        *ecs.ECSManager
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
 }
 
-func NewMovementSystem() *MovementSystem {
-	return &MovementSystem{}
+func NewMovementSystem(ecsM *ecs.ECSManager) *MovementSystem {
+	return &MovementSystem{
+		ecsManager:        ecsM,
+		entitiesManager:   ecsM.GetEntitiesManager(),
+		componentsManager: ecsM.GetComponentsManager(),
+	}
 }
 
-func (ms *MovementSystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
+func (ms *MovementSystem) Update(dt float64) {
 
-	if em == nil || cm == nil {
-		utils.ErrorLogger.Println("MovementSystem: EntitiesManager or ComponentsManager is nil")
+	if ms.ecsManager == nil || ms.entitiesManager == nil || ms.componentsManager == nil {
+		utils.ErrorLogger.Println("MovementSystem: ECSManager or EntitiesManager or ComponentsManager is nil")
 		return
 	}
-
-	// Assign the entities and components manager to the system
-	ms.entitiesManager = em
-	ms.componentsManager = cm
 
 	// Move entities
 	ms.MoveEntities(dt)

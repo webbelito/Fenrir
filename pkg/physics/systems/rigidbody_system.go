@@ -9,18 +9,24 @@ import (
 )
 
 type RigidBodySystem struct {
-	Gravity raylib.Vector2
+	Gravity           raylib.Vector2
+	ecsManager        *ecs.ECSManager
+	entitiesManager   *ecs.EntitiesManager
+	componentsManager *ecs.ComponentsManager
 }
 
-func NewRigidBodySystem(gravity raylib.Vector2) *RigidBodySystem {
+func NewRigidBodySystem(ecsM *ecs.ECSManager, gravity raylib.Vector2) *RigidBodySystem {
 	return &RigidBodySystem{
-		Gravity: gravity,
+		Gravity:           gravity,
+		ecsManager:        ecsM,
+		entitiesManager:   ecsM.GetEntitiesManager(),
+		componentsManager: ecsM.GetComponentsManager(),
 	}
 }
 
-func (rbs *RigidBodySystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.ComponentsManager) {
+func (rbs *RigidBodySystem) Update(dt float64) {
 
-	rigidBodyComps, rigidBodyCompsExists := cm.Components[ecs.RigidBodyComponent]
+	rigidBodyComps, rigidBodyCompsExists := rbs.componentsManager.Components[ecs.RigidBodyComponent]
 
 	if !rigidBodyCompsExists {
 		return
@@ -67,7 +73,7 @@ func (rbs *RigidBodySystem) Update(dt float64, em *ecs.EntitiesManager, cm *ecs.
 		rb.Velocity = raylib.Vector2Add(rb.Velocity, raylib.Vector2Scale(rb.Acceleration, float32(dt)))
 
 		// Get the position component for the entity
-		transform, transformExists := cm.Components[ecs.Transform2DComponent][entity].(*components.Transform2D)
+		transform, transformExists := rbs.componentsManager.Components[ecs.Transform2DComponent][entity].(*components.Transform2D)
 
 		// Handle Position related Updates
 		if transformExists {
