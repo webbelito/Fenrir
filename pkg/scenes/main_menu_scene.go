@@ -53,13 +53,18 @@ func (mms *MainMenuScene) Update(dt float64) {
 func (mms *MainMenuScene) Render() {
 
 	raygui.Label(raylib.Rectangle{
-		X:      700,
-		Y:      300,
+		X:      float32(raylib.GetScreenWidth()/2 - 100),
+		Y:      float32(raylib.GetScreenHeight()/2 - 25),
 		Width:  200,
 		Height: 50,
 	}, "Fenerir Engine")
 
-	if raygui.Button(raylib.NewRectangle(700, 400, 200, 50), "Start Game") {
+	if raygui.Button(raylib.Rectangle{
+		X:      float32(raylib.GetScreenWidth()/2 - 100),
+		Y:      float32(raylib.GetScreenHeight()/2 + 25),
+		Width:  200,
+		Height: 50,
+	}, "Start Game") {
 
 		err := mms.sceneManager.ChangeScene("assets/scenes/game_scene.json")
 		if err != nil {
@@ -67,7 +72,12 @@ func (mms *MainMenuScene) Render() {
 		}
 	}
 
-	if raygui.Button(raylib.NewRectangle(700, 500, 200, 50), "Exit Game") {
+	if raygui.Button(raylib.Rectangle{
+		X:      float32(raylib.GetScreenWidth()/2 - 100),
+		Y:      float32(raylib.GetScreenHeight()/2 + 100),
+		Width:  200,
+		Height: 50,
+	}, "Exit Game") {
 		mms.sceneManager.ExitGame()
 	}
 

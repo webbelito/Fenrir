@@ -163,32 +163,3 @@ func (qt *QuadTree) Clear() {
 		qt.Divided = false
 	}
 }
-
-/*
-
-	// Future Implementation: Increment Update QuadTree
-
-	// Steps to transition from rebuilding each frame to increment updates
-
-	// Track Entity Positions: //
-    // - Maintain a map of entity ID's to their previous positions.const
-	// - Detect when an entity has moved by comparing the current and previous positions.
-
-	// Implement Remove and Update functions:
-	// - Remove: Delete an entity from the QuadTree based on its old position.const
-	// - Update: Re-insert the entity with its new position if it has moved
-
-	// Optimize QuadTree Structure:
-	// - Add metadata for entities or maintain parent references to efficiently update the QuadTree.
-
-	// Modify Collision System
-	// - Instead of clearing and rebuilding the QuadTree each frame, only update entities that have moved.
-	// - Reduce unnecessary insertions and deletions to enhance performance.
-
-	// Handle Entity Destruction
-	// - Ensure that entities removed from the game are also removed from the QuadTree to prevent stale refences
-
-	// Concurrency Considerations
-	// - If entities are updated concurrently, ensure that the QuadTree operations are thread-safe.
-
-*/

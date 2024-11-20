@@ -12,4 +12,5 @@ const (
 	SpriteComponent
 	ParticleComponent
 	ParticleEmitterComponent
+	AnimationComponent
 )
