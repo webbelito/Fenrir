@@ -159,6 +159,11 @@ func (cs *CollisionSystem) Update(dt float64) {
 	if raylib.IsKeyPressed(raylib.KeyQ) {
 		cs.ToggleQuadTreeRender()
 	}
+
+	// TODO: Handle the rendering to the Render System
+	if cs.ShouldRenderQuadTree {
+		cs.Render()
+	}
 }
 
 func (cs *CollisionSystem) Render() {

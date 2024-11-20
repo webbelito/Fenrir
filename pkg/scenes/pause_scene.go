@@ -52,15 +52,20 @@ func (ps *PauseScene) Render() {
 	raylib.DrawRectangle(0, 0, int32(raylib.GetScreenWidth()), int32(raylib.GetScreenHeight()), raylib.Fade(raylib.Black, 0.5))
 
 	// Draw Pause Menu UI
-	raygui.Label(raylib.NewRectangle(float32(raylib.GetScreenWidth()/2-100), float32(raylib.GetScreenHeight()/2-100), 200, 50), "PAUSED")
+	raygui.Label(raylib.Rectangle{
+		X:      float32(raylib.GetScreenWidth()/2 - 100),
+		Y:      float32(raylib.GetScreenHeight()/2 - 25),
+		Width:  200,
+		Height: 50,
+	}, "Paused")
 
 	// Draw Resume Button
-	if raygui.Button(raylib.NewRectangle(
-		float32(raylib.GetScreenWidth()/2-100),
-		float32(raylib.GetScreenHeight()/2),
-		200,
-		50,
-	), "Resume") {
+	if raygui.Button(raylib.Rectangle{
+		X:      float32(raylib.GetScreenWidth()/2 - 100),
+		Y:      float32(raylib.GetScreenHeight()/2 + 25),
+		Width:  200,
+		Height: 50,
+	}, "Resume") {
 		err := ps.sceneManager.PopScene()
 		if err != nil {
 			utils.ErrorLogger.Println("Failed to change scene: ", err)
@@ -68,12 +73,12 @@ func (ps *PauseScene) Render() {
 	}
 
 	// Draw Exit Button
-	if raygui.Button(raylib.NewRectangle(
-		float32(raylib.GetScreenWidth()/2-100),
-		float32(raylib.GetScreenHeight()/2+100),
-		200,
-		50,
-	), "Exit to Main Menu") {
+	if raygui.Button(raylib.Rectangle{
+		X:      float32(raylib.GetScreenWidth()/2 - 100),
+		Y:      float32(raylib.GetScreenHeight()/2 + 100),
+		Width:  200,
+		Height: 50,
+	}, "Exit Game") {
 		err := ps.sceneManager.ChangeScene("assets/scenes/main_menu.json")
 		if err != nil {
 			utils.ErrorLogger.Println("Failed to change scene: ", err)

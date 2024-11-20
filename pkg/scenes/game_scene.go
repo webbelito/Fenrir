@@ -136,6 +136,11 @@ func (gs *GameScene) Init() {
 	gs.ecsManager.AddRenderSystem(particleRenderSystem, particleRenderSystem.GetPriority())
 	gs.renderSystems = append(gs.renderSystems, particleRenderSystem)
 
+	// * Animation System
+	animationSystem := systems.NewAnimationSystem(gs.ecsManager, 5)
+	gs.ecsManager.AddLogicSystem(animationSystem, animationSystem.GetPriority())
+	gs.logicSystems = append(gs.logicSystems, animationSystem)
+
 	// Initialize Entities based on Scene Data
 	gs.initializeEntities()
 
@@ -143,7 +148,7 @@ func (gs *GameScene) Init() {
 	gs.initializeEnvironment()
 
 	// Spawn 100 entities with random positions and colors
-	gs.spawnEntities(100)
+	gs.spawnEntities(25)
 
 }
 
@@ -310,6 +315,8 @@ func (gs *GameScene) initializeEntities() {
 			}
 		}
 
+		// TODO: Remove this temporary code
+
 		// Create dust emitter entity
 		particleEmitter := &components.ParticleEmitter{
 			Particles:        []*components.Particle{},
@@ -320,6 +327,26 @@ func (gs *GameScene) initializeEntities() {
 		}
 
 		gs.ecsManager.AddComponent(entity.ID, ecs.ParticleEmitterComponent, particleEmitter)
+
+		// TODO: Remove this temporary code
+
+		frames := []raylib.Rectangle{
+			raylib.NewRectangle(0, 0, 32, 32),
+			raylib.NewRectangle(32, 0, 32, 32),
+			raylib.NewRectangle(64, 0, 32, 32),
+			raylib.NewRectangle(96, 0, 32, 32),
+		}
+
+		animation := &components.Animation{
+			Frames:        frames,
+			CurrentFrame:  0,
+			FrameDuration: time.Millisecond * 200,
+			IsLooping:     true,
+			IsPlaying:     true,
+		}
+
+		gs.ecsManager.AddComponent(entity.ID, ecs.AnimationComponent, animation)
+
 	}
 }
 
@@ -371,13 +398,13 @@ func (gs *GameScene) spawnEntities(count int) {
 		gs.ecsManager.AddComponent(entity.ID, ecs.Transform2DComponent, &components.Transform2D{
 			Position: spawnPos,
 			Rotation: 0,
-			Scale:    raylib.NewVector2(15, 15),
+			Scale:    raylib.NewVector2(32, 32),
 		})
 
 		// Add a Rigidbody component
 		gs.ecsManager.AddComponent(entity.ID, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
 			Mass:         0.01,
-			Velocity:     raylib.NewVector2(float32(raylib.GetRandomValue(-10, 10)), float32(raylib.GetRandomValue(-10, 10))),
+			Velocity:     raylib.NewVector2(0, 0),
 			Acceleration: raylib.NewVector2(0, 0),
 			Force:        raylib.NewVector2(0, 0),
 			Restitution:  0.5,
@@ -389,7 +416,7 @@ func (gs *GameScene) spawnEntities(count int) {
 		// Add a BoxCollider component
 		gs.ecsManager.AddComponent(entity.ID, ecs.BoxColliderComponent, &physicscomponents.BoxCollider{
 			Type: "Square",
-			Size: raylib.NewVector2(15, 15),
+			Size: raylib.NewVector2(32, 32),
 		})
 
 		// Add a Color component
