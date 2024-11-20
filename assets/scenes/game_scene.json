@@ -1,0 +1,73 @@
+{
+    "scene_name": "Game",
+    "entities": [
+        {
+            "components": {
+                "Transform2D": {
+                    "position": {
+                        "x": 300,
+                        "y": 400
+                    },
+                    "rotation": 0,
+                    "scale": {
+                        "x": 32,
+                        "y": 32
+                    }
+                },
+                "Sprite": {
+                    "texture_path": "assets/images/player.png",
+                    "sourceRect": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 32,
+                        "height": 32
+                    },
+                    "destRect": {
+                        "x": 0,
+                        "y": 0,
+                        "width": 32,
+                        "height": 32
+                    },
+                    "origin": {
+                        "x": 16,
+                        "y": 16
+                    },
+                    "color": "white"
+                },
+                "RigidBody": {
+                    "mass": 1,
+                    "velocity": {
+                        "x": 0,
+                        "y": 0
+                    },
+                    "acceleration": {
+                        "x": 0,
+                        "y": 0
+                    },
+                    "drag": 0.9,
+                    "restitution": 0.5,
+                    "is_kinematic": false,
+                    "is_static": false 
+                },
+                "BoxCollider": {
+                    "type": "Square",
+                    "size": {
+                        "x": 32,
+                        "y": 32
+                    }
+                },
+                "Color": {
+                    "color": "white"
+                },
+                "Player": {
+                    "name": "Webbelito"
+                }
+            }
+        }
+    ],
+
+    "environment": {
+        "background_color": "darkblue",
+        "music": ""
+    }
+}

@@ -1,0 +1,8 @@
+{
+    "scene_name": "MainMenu",
+    "entities": [],
+    "environment": {
+        "background_color": "white",
+        "music": ""
+    }
+}

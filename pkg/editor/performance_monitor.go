@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/webbelito/Fenrir/pkg/ecs"
+	metricinterface "github.com/webbelito/Fenrir/pkg/interfaces/metricinterfaces"
+
 	raygui "github.com/gen2brain/raylib-go/raygui"
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
@@ -16,13 +19,12 @@ type PerformanceMonitor struct {
 	LayoutPosition         raylib.Vector2
 	PerformanceMonitorData PerformanceMonitorData
 	historyIndex           int
+	ecsManager             *ecs.ECSManager
 }
 
 type PerformanceMonitorData struct {
-	FPS            int32
-	UpdateDuration time.Duration
-	RenderDuration time.Duration
-	TotalDuration  time.Duration
+	FPS                int32
+	performanceMetrics metricinterface.PerformanceMetrics
 
 	// Historical data
 	FPSHistory            [historySize]int32
@@ -31,9 +33,8 @@ type PerformanceMonitorData struct {
 	TotalDurationHistory  [historySize]time.Duration
 }
 
-func NewPerformanceMonitor(layoutPosition raylib.Vector2) *PerformanceMonitor {
+func NewPerformanceMonitor(ecsM *ecs.ECSManager) *PerformanceMonitor {
 	pm := &PerformanceMonitor{
-		LayoutPosition:         layoutPosition,
 		PerformanceMonitorData: PerformanceMonitorData{},
 	}
 
@@ -45,29 +46,37 @@ func NewPerformanceMonitor(layoutPosition raylib.Vector2) *PerformanceMonitor {
 		pm.PerformanceMonitorData.TotalDurationHistory[i] = 0
 	}
 
+	pm.ecsManager = ecsM
+
 	return pm
 
 }
 
-func (pm *PerformanceMonitor) Update(pmd *PerformanceMonitorData) {
+func (pm *PerformanceMonitor) SetPosition(position raylib.Vector2) {
+	pm.LayoutPosition = position
+}
+
+func (pm *PerformanceMonitor) Update() {
+
+	// Get the performance metrics from the ECS Manager
+	pm.PerformanceMonitorData.performanceMetrics = pm.ecsManager.GetPerformanceMetrics()
+
+	FPS := raylib.GetFPS()
 
 	// Update the Performance Monitor data
-	pm.PerformanceMonitorData.FPS = pmd.FPS
-	pm.PerformanceMonitorData.UpdateDuration = pmd.UpdateDuration
-	pm.PerformanceMonitorData.RenderDuration = pmd.RenderDuration
-	pm.PerformanceMonitorData.TotalDuration = pmd.TotalDuration
+	pm.PerformanceMonitorData.FPS = FPS
 
 	// Store the historical data
-	pm.PerformanceMonitorData.FPSHistory[pm.historyIndex] = pmd.FPS
-	pm.PerformanceMonitorData.UpdateDurationHistory[pm.historyIndex] = pmd.UpdateDuration
-	pm.PerformanceMonitorData.RenderDurationHistory[pm.historyIndex] = pmd.RenderDuration
-	pm.PerformanceMonitorData.TotalDurationHistory[pm.historyIndex] = pmd.TotalDuration
+	pm.PerformanceMonitorData.FPSHistory[pm.historyIndex] = FPS
+	pm.PerformanceMonitorData.UpdateDurationHistory[pm.historyIndex] = pm.PerformanceMonitorData.performanceMetrics.UpdateDuration
+	pm.PerformanceMonitorData.RenderDurationHistory[pm.historyIndex] = pm.PerformanceMonitorData.performanceMetrics.RenderDuration
+	pm.PerformanceMonitorData.TotalDurationHistory[pm.historyIndex] = pm.PerformanceMonitorData.performanceMetrics.TotalDuration
 
 	// Update the history index
 	pm.historyIndex = (pm.historyIndex + 1) % historySize
 }
 
-func (pm *PerformanceMonitor) Draw(pmd *PerformanceMonitorData) {
+func (pm *PerformanceMonitor) Render() {
 
 	// Define the Performance Monitor panel position and size relative to the editor
 	performanceMonitorRect := raylib.Rectangle{
