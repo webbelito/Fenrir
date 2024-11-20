@@ -10,4 +10,6 @@ const (
 	PlayerComponent
 	VelocityComponent
 	SpriteComponent
+	ParticleComponent
+	ParticleEmitterComponent
 )
