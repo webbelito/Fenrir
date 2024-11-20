@@ -13,27 +13,28 @@ type InputSystem struct {
 	ecsManager        *ecs.ECSManager
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
-	editor            *editor.Editor
+	editorManager     *editor.EditorManager
+	priority          int
 }
 
-func NewInputSystem(ecsM *ecs.ECSManager, e *editor.Editor) *InputSystem {
+func NewInputSystem(ecsM *ecs.ECSManager, e *editor.EditorManager, p int) *InputSystem {
 	return &InputSystem{
 		ecsManager:        ecsM,
 		entitiesManager:   ecsM.GetEntitiesManager(),
 		componentsManager: ecsM.GetComponentsManager(),
-		editor:            e,
+		editorManager:     e,
+		priority:          p,
 	}
 }
 
 func (is *InputSystem) Update(dt float64) {
 
-	if is.ecsManager == nil || is.entitiesManager == nil || is.componentsManager == nil || is.editor == nil {
-		utils.ErrorLogger.Println("InputSystem: EntitiesManager, ComponentsManager or Editor is nil")
+	if is.ecsManager == nil || is.entitiesManager == nil || is.componentsManager == nil || is.editorManager == nil {
+		utils.ErrorLogger.Println("InputSystem: EntitiesManager, ComponentsManager or EditorManager is nil")
 		return
 	}
 
 	// Handle player movement input
-	//is.handlePlayerMovementInput()
 	is.handlePlayerMovementInput()
 
 	// Handle editor input
@@ -102,7 +103,7 @@ func (is *InputSystem) handlePlayerMovementInput() {
 func (is *InputSystem) handleEditorInput() {
 	if raylib.IsKeyPressed(raylib.KeyF1) {
 		utils.InfoLogger.Println("InputSystem: Toggling editor visibility")
-		is.editor.ToggleVisibility()
+		is.editorManager.ToggleVisibility()
 	}
 }
 
@@ -168,4 +169,8 @@ func (is *InputSystem) handleQuadTreeRendering() {
 	if raylib.IsKeyPressed(raylib.KeyF2) {
 		// TODO: Find a way to retrieve the collision system from the ECSManager
 	}
+}
+
+func (is *InputSystem) GetPriority() int {
+	return is.priority
 }

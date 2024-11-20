@@ -13,14 +13,16 @@ type RigidBodySystem struct {
 	ecsManager        *ecs.ECSManager
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
+	priority          int
 }
 
-func NewRigidBodySystem(ecsM *ecs.ECSManager, gravity raylib.Vector2) *RigidBodySystem {
+func NewRigidBodySystem(ecsM *ecs.ECSManager, gravity raylib.Vector2, p int) *RigidBodySystem {
 	return &RigidBodySystem{
 		Gravity:           gravity,
 		ecsManager:        ecsM,
 		entitiesManager:   ecsM.GetEntitiesManager(),
 		componentsManager: ecsM.GetComponentsManager(),
+		priority:          p,
 	}
 }
 
@@ -107,4 +109,8 @@ func (rbs *RigidBodySystem) Update(dt float64) {
 		// Reset force for the next frame
 		rb.Force = raylib.NewVector2(0, 0)
 	}
+}
+
+func (rbs *RigidBodySystem) GetPriority() int {
+	return rbs.priority
 }

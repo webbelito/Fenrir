@@ -10,27 +10,31 @@ import (
 )
 
 type WorldInspector struct {
-	LayoutPosition raylib.Vector2
-	World          *ecs.ECSManager
+	windowPosition raylib.Vector2
+	ecsManager     *ecs.ECSManager
 }
 
-func NewWorldInstructor(layoutPosition raylib.Vector2, world *ecs.ECSManager) *WorldInspector {
+func NewWorldInspector(ecsM *ecs.ECSManager) *WorldInspector {
 	return &WorldInspector{
-		LayoutPosition: layoutPosition,
-		World:          world,
+		windowPosition: raylib.NewVector2(0, 0),
+		ecsManager:     ecsM,
 	}
+}
+
+func (wi *WorldInspector) SetPosition(position raylib.Vector2) {
+	wi.windowPosition = position
 }
 
 func (wi *WorldInspector) Update() {
 	// Currently no logic is needed for the World Inspector
 }
 
-func (wi *WorldInspector) Draw() {
+func (wi *WorldInspector) Render() {
 
 	// Define the World Inspector panel position and size relative to the editor
 	inspectorRect := raylib.Rectangle{
-		X:      wi.LayoutPosition.X,
-		Y:      wi.LayoutPosition.Y,
+		X:      wi.windowPosition.X,
+		Y:      wi.windowPosition.Y,
 		Width:  300,
 		Height: 600,
 	}
@@ -46,7 +50,7 @@ func (wi *WorldInspector) Draw() {
 		Height: 20,
 	}
 
-	entityCount := wi.World.GetEntityCount()
+	entityCount := wi.ecsManager.GetEntityCount()
 
 	displayText := fmt.Sprintf("Active Entities: %d", entityCount)
 

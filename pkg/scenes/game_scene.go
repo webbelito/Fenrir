@@ -49,37 +49,46 @@ func NewGameScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *GameScen
 
 func (gs *GameScene) Init() {
 
-	// Initialize the Editor
-	gameEditor := editor.NewEditor(gs.ecsManager)
+	// * Editor Init
+	editorManager := editor.NewEditorManager(gs.ecsManager, 1)
+
+	// * Resource Manager Init
 
 	// Initialize the Resource Manager
 	resourceManager := resources.NewResourceManager()
 
-	// Initialize Performance Monitor
-	gs.perfMonitor = editor.NewPerformanceMonitor(raylib.NewVector2(1600, 10))
-
 	// Initialize System specific to GameScene
+
+	// * Input System Init
+
 	inputSystem := systems.NewInputSystem(
 		gs.ecsManager,
-		gameEditor,
+		editorManager,
+		0,
 	)
 
-	gs.ecsManager.AddLogicSystem(inputSystem, 0)
+	gs.ecsManager.AddLogicSystem(inputSystem, inputSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, inputSystem)
 
-	movementSystem := systems.NewMovementSystem(gs.ecsManager)
-	gs.ecsManager.AddLogicSystem(movementSystem, 1)
+	// * Movement System Init
+
+	movementSystem := systems.NewMovementSystem(gs.ecsManager, 1)
+	gs.ecsManager.AddLogicSystem(movementSystem, movementSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, movementSystem)
 
 	// Add more systems as needed...
+
+	// * Physics Init
 
 	// Initialize the gravity vector (pixels per second i.e 980 pixels per second)
 	gravity := raylib.NewVector2(0, 980)
 
 	// Initialize the RigidBodySystem
-	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.ecsManager, gravity)
-	gs.ecsManager.AddLogicSystem(rigidBodySystem, 2)
+	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.ecsManager, gravity, 2)
+	gs.ecsManager.AddLogicSystem(rigidBodySystem, rigidBodySystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, rigidBodySystem)
+
+	// * Collision System Init
 
 	// Initialize the CollisionSystem
 	quadBoundary := physics.Rectangle{
@@ -92,19 +101,39 @@ func (gs *GameScene) Init() {
 	maxDepth := int32(5)
 	capacityDepth := int32(0)
 
-	collisionSystem := physicssystems.NewCollisionSystem(gs.ecsManager, quadBoundary, csCapacity, maxDepth, capacityDepth)
-	gs.ecsManager.AddLogicSystem(collisionSystem, 3)
+	collisionSystem := physicssystems.NewCollisionSystem(gs.ecsManager, quadBoundary, csCapacity, maxDepth, capacityDepth, 3)
+	gs.ecsManager.AddLogicSystem(collisionSystem, collisionSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, collisionSystem)
 
-	renderSystem := systems.NewRenderSystem(gs.ecsManager, raylib.NewRectangle(0, 0, float32(raylib.GetScreenWidth()), float32(raylib.GetScreenHeight())), resourceManager)
-	gs.ecsManager.AddRenderSystem(renderSystem, 0)
+	// * Render Init
+
+	screenBoundry := raylib.Rectangle{
+		X:      0,
+		Y:      0,
+		Width:  float32(raylib.GetScreenWidth()),
+		Height: float32(raylib.GetScreenHeight()),
+	}
+
+	renderSystem := systems.NewRenderSystem(gs.ecsManager, screenBoundry, resourceManager, 0)
+	gs.ecsManager.AddRenderSystem(renderSystem, renderSystem.GetPriority())
 	gs.renderSystems = append(gs.renderSystems, renderSystem)
+
+	// * Editor Systems
+
+	gs.ecsManager.AddLogicSystem(editorManager, editorManager.GetPriority())
+	gs.logicSystems = append(gs.logicSystems, editorManager)
+
+	gs.ecsManager.AddRenderSystem(editorManager, 1)
+	gs.renderSystems = append(gs.renderSystems, editorManager)
 
 	// Initialize Entities based on Scene Data
 	gs.initializeEntities()
 
 	// Initialize Environment settings
 	gs.initializeEnvironment()
+
+	// Spawn 100 entities with random positions and colors
+	gs.spawnEntities(100)
 
 }
 
@@ -134,20 +163,6 @@ func (gs *GameScene) Render() {
 	// Calculate Performance Metrics
 	gs.renderDuration = time.Since(renderStart)
 	gs.totalDuration = gs.updateDuration + gs.renderDuration
-
-	// Update Performance Monitor
-	perfData := &editor.PerformanceMonitorData{
-		FPS:            raylib.GetFPS(),
-		UpdateDuration: gs.updateDuration,
-		RenderDuration: gs.renderDuration,
-		TotalDuration:  gs.totalDuration,
-	}
-
-	// Update Performance Monitor
-	gs.perfMonitor.Update(perfData)
-
-	// Render Performance Monitor
-	gs.perfMonitor.Draw(perfData)
 
 }
 
@@ -299,4 +314,65 @@ func (gs *GameScene) initializeEnvironment() {
 
 		// Store music reference if needed later for cleanup...
 	}
+}
+
+func (gs *GameScene) spawnEntities(count int) {
+
+	// Colors to choose from
+	colors := []raylib.Color{
+		raylib.Blue,
+		raylib.Green,
+		raylib.Purple,
+		raylib.Orange,
+		raylib.Pink,
+		raylib.Yellow,
+		raylib.SkyBlue,
+		raylib.Lime,
+		raylib.Gold,
+		raylib.Violet,
+		raylib.Brown,
+		raylib.LightGray,
+		raylib.DarkGray,
+	}
+
+	// Create entities
+	for i := 0; i < count; i++ {
+
+		// Select a random color from the colors slice
+		color := colors[raylib.GetRandomValue(0, int32(len(colors)-1))]
+
+		spawnPos := raylib.NewVector2(float32(raylib.GetRandomValue(0, int32(raylib.GetScreenWidth())-1)), float32(raylib.GetRandomValue(0, int32(raylib.GetScreenHeight())-1)))
+
+		// Create an entity with a Transform2D, Rigidbody and Color
+		entity := gs.ecsManager.CreateEntity()
+
+		// Add a Transform2D component
+		gs.ecsManager.AddComponent(entity.ID, ecs.Transform2DComponent, &components.Transform2D{
+			Position: spawnPos,
+			Rotation: 0,
+			Scale:    raylib.NewVector2(15, 15),
+		})
+
+		// Add a Rigidbody component
+		gs.ecsManager.AddComponent(entity.ID, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
+			Mass:         0.01,
+			Velocity:     raylib.NewVector2(float32(raylib.GetRandomValue(-10, 10)), float32(raylib.GetRandomValue(-10, 10))),
+			Acceleration: raylib.NewVector2(0, 0),
+			Force:        raylib.NewVector2(0, 0),
+			Restitution:  0.5,
+			Drag:         0.1,
+			IsKinematic:  false,
+			IsStatic:     false,
+		})
+
+		// Add a BoxCollider component
+		gs.ecsManager.AddComponent(entity.ID, ecs.BoxColliderComponent, &physicscomponents.BoxCollider{
+			Type: "Square",
+			Size: raylib.NewVector2(15, 15),
+		})
+
+		// Add a Color component
+		gs.ecsManager.AddComponent(entity.ID, ecs.ColorComponent, &components.Color{Color: color})
+	}
+
 }

@@ -49,6 +49,13 @@
                     "is_kinematic": false,
                     "is_static": false 
                 },
+                "BoxCollider": {
+                    "type": "Square",
+                    "size": {
+                        "x": 32,
+                        "y": 32
+                    }
+                },
                 "Color": {
                     "color": "white"
                 },

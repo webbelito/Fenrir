@@ -1,6 +1,8 @@
 package ecs
 
 import (
+	"sort"
+
 	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
 	"github.com/webbelito/Fenrir/pkg/utils"
 )
@@ -25,6 +27,10 @@ func (sm *SystemsManager) AddLogicSystem(system systeminterfaces.Updatable, prio
 
 	if !inserted {
 		sm.logicSystems = append(sm.logicSystems, system)
+
+		sort.Slice(sm.logicSystems, func(i, j int) bool {
+			return sm.logicSystems[i].GetPriority() < sm.logicSystems[j].GetPriority()
+		})
 	}
 
 	utils.InfoLogger.Printf("Added logic system: %T\n", system)
@@ -49,6 +55,10 @@ func (sm *SystemsManager) AddRenderSystem(system systeminterfaces.Renderable, pr
 
 	if !inserted {
 		sm.renderSystems = append(sm.renderSystems, system)
+
+		sort.Slice(sm.renderSystems, func(i, j int) bool {
+			return sm.renderSystems[i].GetPriority() < sm.renderSystems[j].GetPriority()
+		})
 	}
 
 	utils.InfoLogger.Printf("Added render system: %T\n", system)

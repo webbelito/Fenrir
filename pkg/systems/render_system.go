@@ -18,6 +18,7 @@ type RenderSystem struct {
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
 	resourcesManager  *resources.ResourcesManager
+	priority          int
 }
 
 type EntityData struct {
@@ -29,7 +30,7 @@ type EntityData struct {
 	Sprite   *components.Sprite
 }
 
-func NewRenderSystem(ecsM *ecs.ECSManager, screenBounds raylib.Rectangle, rm *resources.ResourcesManager) *RenderSystem {
+func NewRenderSystem(ecsM *ecs.ECSManager, screenBounds raylib.Rectangle, rm *resources.ResourcesManager, p int) *RenderSystem {
 	return &RenderSystem{
 		ScreenCullingRect: screenBounds,
 		Entities:          []EntityData{},
@@ -37,6 +38,7 @@ func NewRenderSystem(ecsM *ecs.ECSManager, screenBounds raylib.Rectangle, rm *re
 		entitiesManager:   ecsM.GetEntitiesManager(),
 		componentsManager: ecsM.GetComponentsManager(),
 		resourcesManager:  rm,
+		priority:          p,
 	}
 }
 
@@ -149,4 +151,8 @@ func (rs *RenderSystem) RenderEntities() {
 			entity.Color,
 		)
 	}
+}
+
+func (rs *RenderSystem) GetPriority() int {
+	return rs.priority
 }

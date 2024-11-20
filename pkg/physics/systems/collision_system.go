@@ -35,15 +35,17 @@ type CollisionSystem struct {
 	ecsManager           *ecs.ECSManager
 	entitesManager       *ecs.EntitiesManager
 	componentsManager    *ecs.ComponentsManager
+	priority             int
 }
 
-func NewCollisionSystem(ecsM *ecs.ECSManager, b physics.Rectangle, c int32, mD int32, cD int32) *CollisionSystem {
+func NewCollisionSystem(ecsM *ecs.ECSManager, b physics.Rectangle, c int32, mD int32, cD int32, p int) *CollisionSystem {
 	return &CollisionSystem{
 		quadTree:             physics.NewQuadTree(b, c, mD, cD),
 		ShouldRenderQuadTree: false,
 		ecsManager:           ecsM,
 		entitesManager:       ecsM.GetEntitiesManager(),
 		componentsManager:    ecsM.GetComponentsManager(),
+		priority:             p,
 	}
 }
 
@@ -321,6 +323,10 @@ func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, eB uint64) {
 	if raylib.Vector2Length(rbB.Velocity) < velocityThreshold {
 		rbB.Velocity = raylib.NewVector2(0, 0)
 	}
+}
+
+func (cs *CollisionSystem) GetPriority() int {
+	return cs.priority
 }
 
 // TODO: Implement a Destroy Entity

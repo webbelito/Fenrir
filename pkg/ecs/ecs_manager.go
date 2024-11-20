@@ -1,11 +1,18 @@
 package ecs
 
-import systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
+import (
+	"time"
+
+	metricinterfaces "github.com/webbelito/Fenrir/pkg/interfaces/metricinterfaces"
+	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
+)
 
 type ECSManager struct {
 	entitiesManager   *EntitiesManager
 	componentsManager *ComponentsManager
 	systemsManager    *SystemsManager
+
+	performanceMetrics metricinterfaces.PerformanceMetrics
 }
 
 func NewECSManager() *ECSManager {
@@ -16,6 +23,8 @@ func NewECSManager() *ECSManager {
 	}
 
 	ecsManager.systemsManager = NewSystemsManager(ecsManager)
+
+	ecsManager.performanceMetrics = metricinterfaces.PerformanceMetrics{}
 
 	return ecsManager
 }
@@ -80,9 +89,21 @@ func (em *ECSManager) RemoveRenderSystem(system systeminterfaces.Renderable) {
 }
 
 func (em *ECSManager) UpdateLogicSystems(dt float64) {
+	em.performanceMetrics.UpdateStartTime = time.Now()
 	em.systemsManager.Update(dt)
+	em.performanceMetrics.UpdateDuration = time.Since(em.performanceMetrics.UpdateStartTime)
 }
 
 func (em *ECSManager) UpdateRenderSystems() {
+	em.performanceMetrics.RenderStartTime = time.Now()
 	em.systemsManager.Render()
+	em.performanceMetrics.RenderDuration = time.Since(em.performanceMetrics.RenderStartTime)
+
+	// Update the total time
+	em.performanceMetrics.TotalDuration = time.Since(em.performanceMetrics.UpdateStartTime)
+}
+
+// * PerformanceMetrics methods
+func (em *ECSManager) GetPerformanceMetrics() metricinterfaces.PerformanceMetrics {
+	return em.performanceMetrics
 }

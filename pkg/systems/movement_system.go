@@ -12,13 +12,15 @@ type MovementSystem struct {
 	ecsManager        *ecs.ECSManager
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
+	priority          int
 }
 
-func NewMovementSystem(ecsM *ecs.ECSManager) *MovementSystem {
+func NewMovementSystem(ecsM *ecs.ECSManager, p int) *MovementSystem {
 	return &MovementSystem{
 		ecsManager:        ecsM,
 		entitiesManager:   ecsM.GetEntitiesManager(),
 		componentsManager: ecsM.GetComponentsManager(),
+		priority:          p,
 	}
 }
 
@@ -77,4 +79,8 @@ func (ms *MovementSystem) MoveEntities(dt float64) {
 
 		}
 	}
+}
+
+func (ms *MovementSystem) GetPriority() int {
+	return ms.priority
 }

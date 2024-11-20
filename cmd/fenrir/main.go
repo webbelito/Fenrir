@@ -20,6 +20,8 @@ func main() {
 	// Initialize raygui
 	raygui.LoadStyleDefault()
 
+	raygui.SetStyle(raylib.FontDefault, raygui.TEXT_SIZE, 20)
+
 	// Initialize Resources Manager
 	// TODO: Implement resource manager
 	//resourcesManager := resources.NewResourceManager()
@@ -47,7 +49,6 @@ func main() {
 			// Update Current Scene
 			currentScene.Update(float64(deltaTime))
 
-			ecsManager.UpdateLogicSystems(float64(deltaTime))
 		}
 
 		// Apply any pending scene changes
@@ -64,9 +65,6 @@ func main() {
 		if currentScene != nil {
 			currentScene.Render()
 		}
-
-		// Render Current Scene
-		sceneManager.Render()
 
 		raylib.EndDrawing()
 
