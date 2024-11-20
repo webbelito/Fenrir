@@ -126,6 +126,16 @@ func (gs *GameScene) Init() {
 	gs.ecsManager.AddRenderSystem(editorManager, 1)
 	gs.renderSystems = append(gs.renderSystems, editorManager)
 
+	// * Particle System
+
+	particleSystem := systems.NewParticleSystem(gs.ecsManager, 4)
+	gs.ecsManager.AddLogicSystem(particleSystem, particleSystem.GetPriority())
+	gs.logicSystems = append(gs.logicSystems, particleSystem)
+
+	particleRenderSystem := systems.NewParticleRenderSystem(gs.ecsManager, 2)
+	gs.ecsManager.AddRenderSystem(particleRenderSystem, particleRenderSystem.GetPriority())
+	gs.renderSystems = append(gs.renderSystems, particleRenderSystem)
+
 	// Initialize Entities based on Scene Data
 	gs.initializeEntities()
 
@@ -299,6 +309,17 @@ func (gs *GameScene) initializeEntities() {
 				utils.ErrorLogger.Printf("Component %s not recognized", compName)
 			}
 		}
+
+		// Create dust emitter entity
+		particleEmitter := &components.ParticleEmitter{
+			Particles:        []*components.Particle{},
+			EmitRate:         10,
+			ParticleLifetime: time.Second * 2,
+			IsEmitting:       true,
+			LastEmitTime:     time.Now(),
+		}
+
+		gs.ecsManager.AddComponent(entity.ID, ecs.ParticleEmitterComponent, particleEmitter)
 	}
 }
 
