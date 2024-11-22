@@ -31,6 +31,8 @@ type GameScene struct {
 	updateDuration time.Duration
 	renderDuration time.Duration
 	totalDuration  time.Duration
+
+	playerEntity *ecs.Entity
 }
 
 func NewGameScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *GameScene {
@@ -141,6 +143,15 @@ func (gs *GameScene) Init() {
 	gs.ecsManager.AddLogicSystem(animationSystem, animationSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, animationSystem)
 
+	// * Camera System
+	// TODO: Move this to a persistent system
+	cameraSystem := systems.NewCameraSystem(gs.ecsManager, 6)
+	gs.ecsManager.AddLogicSystem(cameraSystem, cameraSystem.GetPriority())
+	gs.logicSystems = append(gs.logicSystems, cameraSystem)
+
+	// Assign the camera system to the Render System
+	renderSystem.SetCameraSystem(cameraSystem)
+
 	// Initialize Entities based on Scene Data
 	gs.initializeEntities()
 
@@ -150,6 +161,8 @@ func (gs *GameScene) Init() {
 	// Spawn 100 entities with random positions and colors
 	gs.spawnEntities(25)
 
+	// Assign the player entity as the camera's owner
+	cameraSystem.SetOwner(gs.playerEntity.ID)
 }
 
 func (gs *GameScene) Update(dt float64) {
@@ -313,20 +326,25 @@ func (gs *GameScene) initializeEntities() {
 			default:
 				utils.ErrorLogger.Printf("Component %s not recognized", compName)
 			}
+
+			gs.playerEntity = entity
 		}
 
 		// TODO: Remove this temporary code
 
-		// Create dust emitter entity
-		particleEmitter := &components.ParticleEmitter{
-			Particles:        []*components.Particle{},
-			EmitRate:         10,
-			ParticleLifetime: time.Second * 2,
-			IsEmitting:       true,
-			LastEmitTime:     time.Now(),
-		}
+		/*
+			// Create dust emitter entity
+			particleEmitter := &components.ParticleEmitter{
+				Particles:        []*components.Particle{},
+				EmitRate:         10,
+				ParticleLifetime: time.Second * 2,
+				IsEmitting:       true,
+				LastEmitTime:     time.Now(),
+			}
 
-		gs.ecsManager.AddComponent(entity.ID, ecs.ParticleEmitterComponent, particleEmitter)
+			gs.ecsManager.AddComponent(entity.ID, ecs.ParticleEmitterComponent, particleEmitter)
+
+		*/
 
 		// TODO: Remove this temporary code
 
@@ -403,7 +421,7 @@ func (gs *GameScene) spawnEntities(count int) {
 
 		// Add a Rigidbody component
 		gs.ecsManager.AddComponent(entity.ID, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
-			Mass:         0.01,
+			Mass:         1.0,
 			Velocity:     raylib.NewVector2(0, 0),
 			Acceleration: raylib.NewVector2(0, 0),
 			Force:        raylib.NewVector2(0, 0),

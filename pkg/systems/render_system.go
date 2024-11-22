@@ -18,6 +18,7 @@ type RenderSystem struct {
 	entitiesManager   *ecs.EntitiesManager
 	componentsManager *ecs.ComponentsManager
 	resourcesManager  *resources.ResourcesManager
+	cameraSystem      *CameraSystem
 	priority          int
 }
 
@@ -53,6 +54,17 @@ func (rs *RenderSystem) Render() {
 }
 
 func (rs *RenderSystem) RenderEntities() {
+
+	camera := rs.cameraSystem.GetCamera()
+
+	cam := raylib.Camera2D{
+		Offset:   rs.cameraSystem.camera.Offset,
+		Target:   rs.cameraSystem.camera.Target,
+		Rotation: 0,
+		Zoom:     camera.Zoom,
+	}
+
+	raylib.BeginMode2D(cam)
 
 	transformComps, transformCompsExists := rs.componentsManager.Components[ecs.Transform2DComponent]
 	colorComps, colorCompsExists := rs.componentsManager.Components[ecs.ColorComponent]
@@ -151,8 +163,14 @@ func (rs *RenderSystem) RenderEntities() {
 			entity.Color,
 		)
 	}
+
+	raylib.EndMode2D()
 }
 
 func (rs *RenderSystem) GetPriority() int {
 	return rs.priority
+}
+
+func (rs *RenderSystem) SetCameraSystem(cs *CameraSystem) {
+	rs.cameraSystem = cs
 }

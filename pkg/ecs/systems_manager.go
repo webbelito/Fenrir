@@ -75,6 +75,25 @@ func (sm *SystemsManager) RemoveRenderSystem(system systeminterfaces.Renderable)
 	}
 }
 
+// GetCameraSystem retrieves the CameraSystem from logic or render systems.
+func (sm *SystemsManager) GetCameraSystem() (systeminterfaces.CameraSystemInterface, bool) {
+	// Check Logic Systems
+	for _, sys := range sm.logicSystems {
+		if cameraSys, ok := sys.(systeminterfaces.CameraSystemInterface); ok {
+			return cameraSys, true
+		}
+	}
+
+	// Check Render Systems
+	for _, sys := range sm.renderSystems {
+		if cameraSys, ok := sys.(systeminterfaces.CameraSystemInterface); ok {
+			return cameraSys, true
+		}
+	}
+
+	return nil, false
+}
+
 func (sm *SystemsManager) Update(dt float64) {
 	for _, system := range sm.logicSystems {
 		system.Update(dt)

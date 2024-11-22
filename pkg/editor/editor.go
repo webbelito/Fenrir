@@ -1,9 +1,8 @@
 package editor
 
 import (
-	"github.com/webbelito/Fenrir/pkg/ecs"
-
 	raylib "github.com/gen2brain/raylib-go/raylib"
+	"github.com/webbelito/Fenrir/pkg/ecs"
 )
 
 type Editor struct {

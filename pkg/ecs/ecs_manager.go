@@ -5,6 +5,7 @@ import (
 
 	metricinterfaces "github.com/webbelito/Fenrir/pkg/interfaces/metricinterfaces"
 	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
+	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
 type ECSManager struct {
@@ -106,4 +107,28 @@ func (em *ECSManager) UpdateRenderSystems() {
 // * PerformanceMetrics methods
 func (em *ECSManager) GetPerformanceMetrics() metricinterfaces.PerformanceMetrics {
 	return em.performanceMetrics
+}
+
+// * Player methods
+// TODO: Currently hardcoded to a single player
+func (ecsM *ECSManager) GetPlayerEntity() *Entity {
+
+	// Find the entity with the player components
+	playerComps := ecsM.componentsManager.GetEntitiesWithComponents([]ComponentType{PlayerComponent})
+
+	playerID := uint64(0)
+	for eID := range playerComps {
+
+		if uint64(eID) == playerID {
+			utils.WarnLogger.Println("Multiple entities with the player component found")
+		}
+
+		playerID = uint64(eID)
+	}
+
+	return nil
+}
+
+func (ecsM *ECSManager) GetCameraSystem() (systeminterfaces.CameraSystemInterface, bool) {
+	return ecsM.systemsManager.GetCameraSystem()
 }
