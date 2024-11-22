@@ -18,10 +18,11 @@ import (
 )
 
 type GameScene struct {
-	sceneManager *SceneManager
-	ecsManager   *ecs.ECSManager
-	sceneData    *SceneData
-	perfMonitor  *editor.PerformanceMonitor
+	sceneManager    *SceneManager
+	resourceManager *resources.ResourcesManager
+	ecsManager      *ecs.ECSManager
+	sceneData       *SceneData
+	perfMonitor     *editor.PerformanceMonitor
 
 	entities      []*ecs.Entity
 	logicSystems  []systeminterfaces.Updatable
@@ -37,15 +38,16 @@ type GameScene struct {
 
 func NewGameScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *GameScene {
 	return &GameScene{
-		sceneManager:   sm,
-		ecsManager:     em,
-		sceneData:      sd,
-		updateDuration: 0,
-		renderDuration: 0,
-		totalDuration:  0,
-		entities:       []*ecs.Entity{},
-		logicSystems:   []systeminterfaces.Updatable{},
-		renderSystems:  []systeminterfaces.Renderable{},
+		sceneManager:    sm,
+		resourceManager: resources.NewResourceManager(),
+		ecsManager:      em,
+		sceneData:       sd,
+		updateDuration:  0,
+		renderDuration:  0,
+		totalDuration:   0,
+		entities:        []*ecs.Entity{},
+		logicSystems:    []systeminterfaces.Updatable{},
+		renderSystems:   []systeminterfaces.Renderable{},
 	}
 }
 
@@ -55,9 +57,6 @@ func (gs *GameScene) Init() {
 	editorManager := editor.NewEditorManager(gs.ecsManager, 1)
 
 	// * Resource Manager Init
-
-	// Initialize the Resource Manager
-	resourceManager := resources.NewResourceManager()
 
 	// Initialize System specific to GameScene
 
@@ -116,7 +115,7 @@ func (gs *GameScene) Init() {
 		Height: float32(raylib.GetScreenHeight()),
 	}
 
-	renderSystem := systems.NewRenderSystem(gs.ecsManager, screenBoundry, resourceManager, 0)
+	renderSystem := systems.NewRenderSystem(gs.ecsManager, screenBoundry, gs.resourceManager, 0)
 	gs.ecsManager.AddRenderSystem(renderSystem, renderSystem.GetPriority())
 	gs.renderSystems = append(gs.renderSystems, renderSystem)
 
@@ -151,6 +150,11 @@ func (gs *GameScene) Init() {
 
 	// Assign the camera system to the Render System
 	renderSystem.SetCameraSystem(cameraSystem)
+
+	// * Audio System
+	audioSystem := systems.NewAudioSystem(gs.ecsManager, gs.resourceManager, 7)
+	gs.ecsManager.AddLogicSystem(audioSystem, audioSystem.GetPriority())
+	gs.logicSystems = append(gs.logicSystems, audioSystem)
 
 	// Initialize Entities based on Scene Data
 	gs.initializeEntities()
@@ -320,6 +324,26 @@ func (gs *GameScene) initializeEntities() {
 					Name: compMap["name"].(string),
 				}
 				gs.ecsManager.AddComponent(entity.ID, ecs.PlayerComponent, player)
+			case "AudioSource":
+				compMap := compData.(map[string]interface{})
+				filePath := compMap["file_path"].(string)
+				volume := float32(compMap["volume"].(float64))
+				isLooping := compMap["is_looping"].(bool)
+
+				sound, err := gs.resourceManager.LoadSound(filePath)
+				if err != nil {
+					utils.ErrorLogger.Printf("Failed to load sound: %s", err)
+					continue
+				}
+
+				audioSource := &components.AudioSource{
+					FilePath:  filePath,
+					Volume:    volume,
+					IsLooping: isLooping,
+					Sound:     sound,
+				}
+
+				gs.ecsManager.AddComponent(entity.ID, ecs.AudioSourceComponent, audioSource)
 
 			// Add more components as needed...
 

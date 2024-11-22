@@ -13,4 +13,5 @@ const (
 	ParticleComponent
 	ParticleEmitterComponent
 	AnimationComponent
+	AudioSourceComponent
 )

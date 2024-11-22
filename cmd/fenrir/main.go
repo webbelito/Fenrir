@@ -15,16 +15,16 @@ func main() {
 	raylib.InitWindow(1920, 1280, "Fenrir Engine")
 	defer raylib.CloseWindow()
 
+	// Initialize audio device
+	raylib.InitAudioDevice()
+	defer raylib.CloseAudioDevice()
+
 	raylib.SetTargetFPS(60)
 
 	// Initialize raygui
 	raygui.LoadStyleDefault()
 
 	raygui.SetStyle(raylib.FontDefault, raygui.TEXT_SIZE, 20)
-
-	// Initialize Resources Manager
-	// TODO: Implement resource manager
-	//resourcesManager := resources.NewResourceManager()
 
 	// Initialize ECS Manager
 	ecsManager := ecs.NewECSManager()
