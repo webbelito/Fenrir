@@ -48,6 +48,9 @@ func (is *InputSystem) Update(dt float64) {
 
 	// Handle QuadTree rendering
 	is.handleQuadTreeRendering()
+
+	// TODO: Change this to something proper
+	is.handlePlayerPlaySound()
 }
 
 func (is *InputSystem) handlePlayerMovementInput() {
@@ -168,6 +171,28 @@ func (is *InputSystem) handleRigidBodySpawner() {
 func (is *InputSystem) handleQuadTreeRendering() {
 	if raylib.IsKeyPressed(raylib.KeyF2) {
 		// TODO: Find a way to retrieve the collision system from the ECSManager
+	}
+}
+
+func (is *InputSystem) handlePlayerPlaySound() {
+	if raylib.IsKeyPressed(raylib.KeyB) {
+
+		playerEntities := is.ecsManager.GetComponentsManager().GetEntitiesWithComponents([]ecs.ComponentType{ecs.AudioSourceComponent})
+		for _, entityID := range playerEntities {
+			audioComp, audioCompExists := is.ecsManager.GetComponent(entityID, ecs.AudioSourceComponent)
+			if !audioCompExists {
+				utils.InfoLogger.Printf("Entity %d has no AudioSourceComponent", entityID)
+				continue
+			}
+
+			audioSource, ok := audioComp.(*components.AudioSource)
+			if !ok {
+				utils.ErrorLogger.Printf("Entity %d AudioSourceComponent has wrong type", entityID)
+				continue
+			}
+
+			audioSource.ShouldPlay = true
+		}
 	}
 }
 

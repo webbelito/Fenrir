@@ -61,6 +61,11 @@
                 },
                 "Player": {
                     "name": "Webbelito"
+                },
+                "AudioSource": {
+                    "file_path": "assets/sounds/bounce.wav",
+                    "volume": 1,
+                    "is_looping": false
                 }
             }
         }
