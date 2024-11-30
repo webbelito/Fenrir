@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/scenes"
+	"github.com/webbelito/Fenrir/pkg/systems"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	"github.com/gen2brain/raylib-go/raygui"
@@ -29,9 +30,20 @@ func main() {
 	// Initialize ECS Manager
 	ecsManager := ecs.NewECSManager()
 
+	// Initialize UI System
+	UISystem := systems.NewUISystem(ecsManager, 0)
+	ecsManager.AddUIRenderSystem(UISystem, UISystem.GetPriority())
+
+	// Initialize Event Listener System
+	EventsListenerSystem := systems.NewEventsListenerSystem(ecsManager, 0)
+	ecsManager.AddLogicSystem(EventsListenerSystem, EventsListenerSystem.GetPriority())
+
 	// Initialize Scene Manager
 	sceneManager := scenes.NewSceneManager(ecsManager)
-	sceneManager.PushScene("assets/scenes/main_menu.json")
+	err := sceneManager.PushScene("assets/scenes/main_menu.json")
+	if err != nil {
+		utils.ErrorLogger.Fatalf("Failed to push scene: %v", err)
+	}
 
 	// Disable the Escape key from closing the window
 	raylib.SetExitKey(0)
@@ -64,9 +76,12 @@ func main() {
 
 		if currentScene != nil {
 			currentScene.Render()
+			ecsManager.RenderUISystems()
 		}
 
 		raylib.EndDrawing()
 
 	}
+
+	// TODO: Unload All Resources
 }

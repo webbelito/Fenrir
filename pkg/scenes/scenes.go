@@ -3,7 +3,7 @@ package scenes
 import "github.com/webbelito/Fenrir/pkg/ecs"
 
 type Scene interface {
-	Init()
+	Initialize()
 	Update(dt float64)
 	Render()
 	Cleanup()

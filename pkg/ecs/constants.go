@@ -15,3 +15,10 @@ const (
 	AnimationComponent
 	AudioSourceComponent
 )
+
+// Component types for UI components with an offset of 100
+const (
+	UILabelComponent = iota + 100
+	UIPanelComponent
+	UIButtonComponent
+)

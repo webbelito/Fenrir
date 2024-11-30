@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/events"
 	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
@@ -16,11 +17,17 @@ type SceneManager struct {
 }
 
 func NewSceneManager(ecsManager *ecs.ECSManager) *SceneManager {
-	return &SceneManager{
+	sm := &SceneManager{
 		scenes:         []Scene{},
 		ecsManager:     ecsManager,
 		shouldExitGame: false,
 	}
+
+	sm.ecsManager.GetEventsManager().Subscribe("change_scene", sm.OnChangeScene)
+	sm.ecsManager.GetEventsManager().Subscribe("exit_game", sm.OnExitGame)
+
+	return sm
+
 }
 
 func (sm *SceneManager) PushScene(sceneFilePath string) error {
@@ -49,7 +56,9 @@ func (sm *SceneManager) PushScene(sceneFilePath string) error {
 	}
 
 	sm.scenes = append(sm.scenes, newScene)
-	newScene.Init()
+	newScene.Initialize()
+
+	utils.InfoLogger.Printf("Pushed scene: %s\n", sceneData.SceneName)
 
 	return nil
 }
@@ -139,4 +148,29 @@ func (sm *SceneManager) Render() {
 	for _, scene := range sm.scenes {
 		scene.Render()
 	}
+}
+
+func (sm *SceneManager) OnChangeScene(event events.Event) {
+
+	utils.InfoLogger.Println("SceneManager: OnChangeScene: event received")
+
+	switch e := event.(type) {
+	case events.SceneChangeEvent:
+
+		utils.InfoLogger.Printf("SceneManager: OnChangeScene: changing scene to %s\n", e.ScenePath)
+
+		err := sm.ChangeScene(e.ScenePath)
+		if err != nil {
+			utils.ErrorLogger.Println("Failed to change scene: ", err)
+		}
+
+	default:
+		utils.ErrorLogger.Println("SceneManager: OnChangeScene: unknown event type")
+	}
+}
+
+func (sm *SceneManager) OnExitGame(event events.Event) {
+
+	sm.shouldExitGame = event.(events.ExitGameEvent).ShouldExitGame
+
 }

@@ -3,24 +3,30 @@ package ecs
 import (
 	"time"
 
+	"github.com/webbelito/Fenrir/pkg/events"
 	metricinterfaces "github.com/webbelito/Fenrir/pkg/interfaces/metricinterfaces"
 	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
 	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
 type ECSManager struct {
-	entitiesManager   *EntitiesManager
-	componentsManager *ComponentsManager
-	systemsManager    *SystemsManager
+	entitiesManager     *EntitiesManager
+	componentsManager   *ComponentsManager
+	uiComponentsManager *UIComponentsManager
+	systemsManager      *SystemsManager
+	eventsManager       *events.EventsManager
 
 	performanceMetrics metricinterfaces.PerformanceMetrics
 }
 
 func NewECSManager() *ECSManager {
 
+	// TODO: Implement a NewSystemsManager and NewPerformanceMetrics when creating the ECSManager
 	ecsManager := &ECSManager{
-		entitiesManager:   NewEntitiesManager(),
-		componentsManager: NewComponentsManager(),
+		entitiesManager:     NewEntitiesManager(),
+		componentsManager:   NewComponentsManager(),
+		uiComponentsManager: NewUIComponentsManager(),
+		eventsManager:       events.NewEventsManager(),
 	}
 
 	ecsManager.systemsManager = NewSystemsManager(ecsManager)
@@ -43,6 +49,7 @@ func (em *ECSManager) CreateEntity() *Entity {
 func (em *ECSManager) DestroyEntity(id uint64) {
 	em.entitiesManager.DestroyEntity(id)
 	em.componentsManager.DestroyEntityComponents(id)
+	em.uiComponentsManager.DestroyEntityComponents(id)
 }
 
 func (em *ECSManager) GetAllEntities() []*Entity {
@@ -67,26 +74,55 @@ func (em *ECSManager) GetComponent(eID uint64, ct ComponentType) (Component, boo
 	return em.componentsManager.GetComponent(eID, ct)
 }
 
+// * UIComponentsManager methods
+func (em *ECSManager) GetUIComponentsManager() *UIComponentsManager {
+	return em.uiComponentsManager
+}
+
+func (em *ECSManager) AddUIComponent(eID uint64, ct UIComponentType, c UIComponent) {
+	em.uiComponentsManager.AddComponent(eID, ct, c)
+}
+
+func (em *ECSManager) GetUIComponent(eID uint64, ct UIComponentType) (UIComponent, bool) {
+	return em.uiComponentsManager.GetComponent(eID, ct)
+}
+
+func (em *ECSManager) GetUIComponentsOfType(ct UIComponentType) (map[uint64]UIComponent, bool) {
+	return em.uiComponentsManager.GetComponentsOfType(ct)
+}
+
+func (em *ECSManager) GetUIEntitiesWithComponents(cts []UIComponentType) []uint64 {
+	return em.uiComponentsManager.GetEntitiesWithComponents(cts)
+}
+
 // * SystemsManager methods
 
 func (em *ECSManager) GetSystemsManager() *SystemsManager {
 	return em.systemsManager
 }
 
-func (em *ECSManager) AddLogicSystem(system systeminterfaces.Updatable, priority int) {
+func (em *ECSManager) AddLogicSystem(system systeminterfaces.UpdatableSystemInterface, priority int) {
 	em.systemsManager.AddLogicSystem(system, priority)
 }
 
-func (em *ECSManager) RemoveLogicSystem(system systeminterfaces.Updatable) {
+func (em *ECSManager) RemoveLogicSystem(system systeminterfaces.UpdatableSystemInterface) {
 	em.systemsManager.RemoveLogicSystem(system)
 }
 
-func (em *ECSManager) AddRenderSystem(system systeminterfaces.Renderable, priority int) {
+func (em *ECSManager) AddRenderSystem(system systeminterfaces.RenderableSystemInterface, priority int) {
 	em.systemsManager.AddRenderSystem(system, priority)
 }
 
-func (em *ECSManager) RemoveRenderSystem(system systeminterfaces.Renderable) {
+func (em *ECSManager) RemoveRenderSystem(system systeminterfaces.RenderableSystemInterface) {
 	em.systemsManager.RemoveRenderSystem(system)
+}
+
+func (em *ECSManager) AddUIRenderSystem(system systeminterfaces.UIRenderableSystemInterface, priority int) {
+	em.systemsManager.AddUIRenderSystem(system, priority)
+}
+
+func (em *ECSManager) RemoveUIRenderSystem(system systeminterfaces.UIRenderableSystemInterface, priority int) {
+	em.systemsManager.RemoveUIRenderSystem(system, priority)
 }
 
 func (em *ECSManager) UpdateLogicSystems(dt float64) {
@@ -102,6 +138,19 @@ func (em *ECSManager) UpdateRenderSystems() {
 
 	// Update the total time
 	em.performanceMetrics.TotalDuration = time.Since(em.performanceMetrics.UpdateStartTime)
+}
+
+func (em *ECSManager) RenderUISystems() {
+
+	// TODO: Implement performance metrics for UI Render systems
+
+	em.systemsManager.RenderUI()
+}
+
+// * EventsManager methods
+
+func (em *ECSManager) GetEventsManager() *events.EventsManager {
+	return em.eventsManager
 }
 
 // * PerformanceMetrics methods

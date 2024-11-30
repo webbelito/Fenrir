@@ -2,12 +2,12 @@ package systeminterfaces
 
 import "github.com/webbelito/Fenrir/pkg/components"
 
-type Updatable interface {
+type UpdatableSystemInterface interface {
 	Update(dt float64)
 	GetPriority() int
 }
 
-type Renderable interface {
+type RenderableSystemInterface interface {
 	Render()
 	GetPriority() int
 }
@@ -19,5 +19,10 @@ type CameraSystemInterface interface {
 	SetCamera(camera *components.Camera)
 	SetOwner(owner uint64)
 	GetOwner() uint64
+	GetPriority() int
+}
+
+type UIRenderableSystemInterface interface {
+	RenderUI()
 	GetPriority() int
 }
