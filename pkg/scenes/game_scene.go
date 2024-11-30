@@ -25,8 +25,8 @@ type GameScene struct {
 	perfMonitor     *editor.PerformanceMonitor
 
 	entities      []*ecs.Entity
-	logicSystems  []systeminterfaces.Updatable
-	renderSystems []systeminterfaces.Renderable
+	logicSystems  []systeminterfaces.UpdatableSystemInterface
+	renderSystems []systeminterfaces.RenderableSystemInterface
 
 	// Performance Metrics
 	updateDuration time.Duration
@@ -46,12 +46,12 @@ func NewGameScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *GameScen
 		renderDuration:  0,
 		totalDuration:   0,
 		entities:        []*ecs.Entity{},
-		logicSystems:    []systeminterfaces.Updatable{},
-		renderSystems:   []systeminterfaces.Renderable{},
+		logicSystems:    []systeminterfaces.UpdatableSystemInterface{},
+		renderSystems:   []systeminterfaces.RenderableSystemInterface{},
 	}
 }
 
-func (gs *GameScene) Init() {
+func (gs *GameScene) Initialize() {
 
 	// * Editor Init
 	editorManager := editor.NewEditorManager(gs.ecsManager, 1)
@@ -65,7 +65,7 @@ func (gs *GameScene) Init() {
 	inputSystem := systems.NewInputSystem(
 		gs.ecsManager,
 		editorManager,
-		0,
+		2,
 	)
 
 	gs.ecsManager.AddLogicSystem(inputSystem, inputSystem.GetPriority())
@@ -73,7 +73,7 @@ func (gs *GameScene) Init() {
 
 	// * Movement System Init
 
-	movementSystem := systems.NewMovementSystem(gs.ecsManager, 1)
+	movementSystem := systems.NewMovementSystem(gs.ecsManager, 3)
 	gs.ecsManager.AddLogicSystem(movementSystem, movementSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, movementSystem)
 
@@ -85,7 +85,7 @@ func (gs *GameScene) Init() {
 	gravity := raylib.NewVector2(0, 980)
 
 	// Initialize the RigidBodySystem
-	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.ecsManager, gravity, 2)
+	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.ecsManager, gravity, 4)
 	gs.ecsManager.AddLogicSystem(rigidBodySystem, rigidBodySystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, rigidBodySystem)
 
@@ -102,7 +102,7 @@ func (gs *GameScene) Init() {
 	maxDepth := int32(5)
 	capacityDepth := int32(0)
 
-	collisionSystem := physicssystems.NewCollisionSystem(gs.ecsManager, quadBoundary, csCapacity, maxDepth, capacityDepth, 3)
+	collisionSystem := physicssystems.NewCollisionSystem(gs.ecsManager, quadBoundary, csCapacity, maxDepth, capacityDepth, 5)
 	gs.ecsManager.AddLogicSystem(collisionSystem, collisionSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, collisionSystem)
 
@@ -129,7 +129,7 @@ func (gs *GameScene) Init() {
 
 	// * Particle System
 
-	particleSystem := systems.NewParticleSystem(gs.ecsManager, 4)
+	particleSystem := systems.NewParticleSystem(gs.ecsManager, 6)
 	gs.ecsManager.AddLogicSystem(particleSystem, particleSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, particleSystem)
 
@@ -138,13 +138,13 @@ func (gs *GameScene) Init() {
 	gs.renderSystems = append(gs.renderSystems, particleRenderSystem)
 
 	// * Animation System
-	animationSystem := systems.NewAnimationSystem(gs.ecsManager, 5)
+	animationSystem := systems.NewAnimationSystem(gs.ecsManager, 7)
 	gs.ecsManager.AddLogicSystem(animationSystem, animationSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, animationSystem)
 
 	// * Camera System
 	// TODO: Move this to a persistent system
-	cameraSystem := systems.NewCameraSystem(gs.ecsManager, 6)
+	cameraSystem := systems.NewCameraSystem(gs.ecsManager, 8)
 	gs.ecsManager.AddLogicSystem(cameraSystem, cameraSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, cameraSystem)
 
@@ -152,7 +152,7 @@ func (gs *GameScene) Init() {
 	renderSystem.SetCameraSystem(cameraSystem)
 
 	// * Audio System
-	audioSystem := systems.NewAudioSystem(gs.ecsManager, gs.resourceManager, 7)
+	audioSystem := systems.NewAudioSystem(gs.ecsManager, gs.resourceManager, 9)
 	gs.ecsManager.AddLogicSystem(audioSystem, audioSystem.GetPriority())
 	gs.logicSystems = append(gs.logicSystems, audioSystem)
 

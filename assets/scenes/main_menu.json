@@ -1,8 +1,75 @@
 {
     "scene_name": "MainMenu",
-    "entities": [],
-    "environment": {
-        "background_color": "white",
-        "music": ""
-    }
+    "Entities": [
+        { 
+            "Components": {
+                "UIPanel": {
+                    "Title": "Main Menu",
+                    "Bounds": {
+                        "X": 560,
+                        "Y": 340,
+                        "Width": 800,
+                        "Height": 600
+                    },
+                    "IsVisible": true
+                }
+            }
+        },
+        { 
+            "Components": {
+                "UILabel": {
+                    "Label": "Fenrir Game Engine",
+                    "Bounds": {
+                        "X": 760,
+                        "Y": 390,
+                        "Width": 400,
+                        "Height": 50
+                    },
+                    "IsVisible": true
+                }
+            }
+        },
+        { 
+            "Components": {
+                "UIButton": {
+                    "Text": "Start Game",
+                    "Bounds": {
+                        "X": 760,
+                        "Y": 490,
+                        "Width": 200,
+                        "Height": 50
+                    },
+                    "IsVisible": true
+                }
+            }
+        },
+        { 
+            "Components": {
+                "UIButton": {
+                    "Text": "Options",
+                    "Bounds": {
+                        "X": 760,
+                        "Y": 590,
+                        "Width": 200,
+                        "Height": 50
+                    },
+                    "IsVisible": true
+                }
+            }
+        },
+        { 
+            "Components": {
+                "UIButton": {
+                    "Text": "Exit",
+                    "Bounds": {
+                        "X": 760,
+                        "Y": 690,
+                        "Width": 200,
+                        "Height": 50
+                    },
+                    "IsVisible": true
+                }
+            }
+        }
+    ]
 }

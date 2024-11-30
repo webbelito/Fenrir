@@ -15,8 +15,8 @@ type PauseScene struct {
 	sceneData    *SceneData
 
 	entities      []*ecs.Entity
-	logicSystems  []systeminterfaces.Updatable
-	renderSystems []systeminterfaces.Renderable
+	logicSystems  []systeminterfaces.UpdatableSystemInterface
+	renderSystems []systeminterfaces.RenderableSystemInterface
 }
 
 func NewPauseScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *PauseScene {
@@ -25,13 +25,13 @@ func NewPauseScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *PauseSc
 		ecsManager:    em,
 		sceneData:     sd,
 		entities:      []*ecs.Entity{},
-		logicSystems:  []systeminterfaces.Updatable{},
-		renderSystems: []systeminterfaces.Renderable{},
+		logicSystems:  []systeminterfaces.UpdatableSystemInterface{},
+		renderSystems: []systeminterfaces.RenderableSystemInterface{},
 	}
 }
 
 // TODO: Immplement Init function
-func (ps *PauseScene) Init() {
+func (ps *PauseScene) Initialize() {
 	// Initialize the scene here
 }
 
