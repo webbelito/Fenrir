@@ -5,40 +5,50 @@ import (
 	"github.com/webbelito/Fenrir/pkg/events"
 )
 
+// EventsListenerSystem is a system that listens for events
 type EventsListenerSystem struct {
-	ecsManager    *ecs.ECSManager
+	manager       *ecs.Manager
 	eventsManager *events.EventsManager
 	priority      int
 }
 
-func NewEventsListenerSystem(ecsM *ecs.ECSManager, p int) *EventsListenerSystem {
+// NewEventsListenerSystem creates a new EventsListenerSystem
+func NewEventsListenerSystem(m *ecs.Manager, p int) *EventsListenerSystem {
 	els := &EventsListenerSystem{
-		ecsManager:    ecsM,
-		eventsManager: ecsM.GetEventsManager(),
-		priority:      p,
+		manager:  m,
+		priority: p,
 	}
 
+	// Subscribe to button clicked events
 	els.eventsManager.Subscribe("button_clicked", els.OnButtonClick)
 
 	return els
-
 }
 
+// OnButtonClick handles button click events
 func (els *EventsListenerSystem) OnButtonClick(event events.Event) {
 
+	// Check the type of the event
 	switch e := event.(type) {
+
+	// If the event is a ButtonClickEvent
 	case events.ButtonClickEvent:
+
+		// Check the button text, and dispatch the appropriate event
 		switch e.ButtonText {
 		case "Start Game":
-			els.ecsManager.GetEventsManager().Dispatch("change_scene", events.SceneChangeEvent{ScenePath: "assets/scenes/game_scene.json"})
+			els.manager.DispatchEvent("change_scene", events.SceneChangeEvent{ScenePath: "assets/scenes/game_scene.json"})
 		case "Options":
-			els.ecsManager.GetEventsManager().Dispatch("change_scene", events.SceneChangeEvent{ScenePath: "assets/scenes/options_scene.json"})
+			els.manager.DispatchEvent("change_scene", events.SceneChangeEvent{ScenePath: "assets/scenes/options_scene.json"})
 		case "Exit":
-			els.ecsManager.GetEventsManager().Dispatch("exit_game", events.ExitGameEvent{ShouldExitGame: true})
+			els.manager.DispatchEvent("exit_game", events.ExitGameEvent{ShouldExitGame: true})
 		}
 	}
 }
 
+/*
+GetPriority returns the priority of the system
+*/
 func (els *EventsListenerSystem) GetPriority() int {
 	return els.priority
 }

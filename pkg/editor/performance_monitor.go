@@ -11,17 +11,20 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// historySize is the number of historical data points to store
 const (
 	historySize = 60
 )
 
+// PerformanceMonitor is a struct that represents the Performance Monitor
 type PerformanceMonitor struct {
-	LayoutPosition         raylib.Vector2
-	PerformanceMonitorData PerformanceMonitorData
+	manager                *ecs.Manager
+	layoutPosition         raylib.Vector2
+	performanceMonitorData PerformanceMonitorData
 	historyIndex           int
-	ecsManager             *ecs.ECSManager
 }
 
+// PerformanceMonitorData is a struct that holds the data for the Performance Monitor
 type PerformanceMonitorData struct {
 	FPS                int32
 	performanceMetrics metricinterface.PerformanceMetrics
@@ -33,44 +36,45 @@ type PerformanceMonitorData struct {
 	TotalDurationHistory  [historySize]time.Duration
 }
 
-func NewPerformanceMonitor(ecsM *ecs.ECSManager) *PerformanceMonitor {
+// NewPerformanceMonitor creates a new PerformanceMonitor
+func NewPerformanceMonitor(m *ecs.Manager) *PerformanceMonitor {
 	pm := &PerformanceMonitor{
-		PerformanceMonitorData: PerformanceMonitorData{},
+		manager:                m,
+		performanceMonitorData: PerformanceMonitorData{},
 	}
 
 	// Pre-fill FPSHistory with an inital FPS value e.g. 60
 	for i := 0; i < historySize; i++ {
-		pm.PerformanceMonitorData.FPSHistory[i] = 60
-		pm.PerformanceMonitorData.UpdateDurationHistory[i] = 0
-		pm.PerformanceMonitorData.RenderDurationHistory[i] = 0
-		pm.PerformanceMonitorData.TotalDurationHistory[i] = 0
+		pm.performanceMonitorData.FPSHistory[i] = 60
+		pm.performanceMonitorData.UpdateDurationHistory[i] = 0
+		pm.performanceMonitorData.RenderDurationHistory[i] = 0
+		pm.performanceMonitorData.TotalDurationHistory[i] = 0
 	}
-
-	pm.ecsManager = ecsM
 
 	return pm
 
 }
 
+// SetPosition sets the position of the Performance Monitor
 func (pm *PerformanceMonitor) SetPosition(position raylib.Vector2) {
-	pm.LayoutPosition = position
+	pm.layoutPosition = position
 }
 
 func (pm *PerformanceMonitor) Update() {
 
 	// Get the performance metrics from the ECS Manager
-	pm.PerformanceMonitorData.performanceMetrics = pm.ecsManager.GetPerformanceMetrics()
+	pm.performanceMonitorData.performanceMetrics = pm.manager.GetPerformanceMetrics()
 
 	FPS := raylib.GetFPS()
 
 	// Update the Performance Monitor data
-	pm.PerformanceMonitorData.FPS = FPS
+	pm.performanceMonitorData.FPS = FPS
 
 	// Store the historical data
-	pm.PerformanceMonitorData.FPSHistory[pm.historyIndex] = FPS
-	pm.PerformanceMonitorData.UpdateDurationHistory[pm.historyIndex] = pm.PerformanceMonitorData.performanceMetrics.UpdateDuration
-	pm.PerformanceMonitorData.RenderDurationHistory[pm.historyIndex] = pm.PerformanceMonitorData.performanceMetrics.RenderDuration
-	pm.PerformanceMonitorData.TotalDurationHistory[pm.historyIndex] = pm.PerformanceMonitorData.performanceMetrics.TotalDuration
+	pm.performanceMonitorData.FPSHistory[pm.historyIndex] = FPS
+	pm.performanceMonitorData.UpdateDurationHistory[pm.historyIndex] = pm.performanceMonitorData.performanceMetrics.UpdateDuration
+	pm.performanceMonitorData.RenderDurationHistory[pm.historyIndex] = pm.performanceMonitorData.performanceMetrics.RenderDuration
+	pm.performanceMonitorData.TotalDurationHistory[pm.historyIndex] = pm.performanceMonitorData.performanceMetrics.TotalDuration
 
 	// Update the history index
 	pm.historyIndex = (pm.historyIndex + 1) % historySize
@@ -80,8 +84,8 @@ func (pm *PerformanceMonitor) Render() {
 
 	// Define the Performance Monitor panel position and size relative to the editor
 	performanceMonitorRect := raylib.Rectangle{
-		X:      pm.LayoutPosition.X,
-		Y:      pm.LayoutPosition.Y,
+		X:      pm.layoutPosition.X,
+		Y:      pm.layoutPosition.Y,
 		Width:  300,
 		Height: 600,
 	}
@@ -96,10 +100,10 @@ func (pm *PerformanceMonitor) Render() {
 	lineSpacing := 30
 
 	// Display Averaged Metrics
-	averageFPS := pm.PerformanceMonitorData.calculateAverageFPS()
-	averageUpdate := pm.PerformanceMonitorData.calculateAverageUpdateDuration()
-	averageRender := pm.PerformanceMonitorData.calculateAverageRenderDuration()
-	averageTotal := pm.PerformanceMonitorData.calculateAverageTotalDuration()
+	averageFPS := pm.performanceMonitorData.calculateAverageFPS()
+	averageUpdate := pm.performanceMonitorData.calculateAverageUpdateDuration()
+	averageRender := pm.performanceMonitorData.calculateAverageRenderDuration()
+	averageTotal := pm.performanceMonitorData.calculateAverageTotalDuration()
 
 	// Convert time.Duration to microseconds
 	averageUpdateMicro := averageUpdate.Microseconds()
@@ -143,44 +147,69 @@ func (pm *PerformanceMonitor) Render() {
 	}, totalDurationDisplayText)
 
 	// Draw FPS Graph
-	drawGraph("FPS", pm.PerformanceMonitorData.FPSHistory[:], int32(performanceMonitorRect.X+10), int32(performanceMonitorRect.Y+180), 280, 100, raylib.Green)
+	drawGraph("FPS", pm.performanceMonitorData.FPSHistory[:], int32(performanceMonitorRect.X+10), int32(performanceMonitorRect.Y+180), 280, 100, raylib.Green)
 
 	// Draw Update Duration Graph
-	drawGraph("Update (us)", convertDurationsToInt32(pm.PerformanceMonitorData.UpdateDurationHistory[:]), int32(performanceMonitorRect.X+10), int32(performanceMonitorRect.Y+300), 280, 100, raylib.Red)
+	drawGraph("Update (us)", convertDurationsToInt32(pm.performanceMonitorData.UpdateDurationHistory[:]), int32(performanceMonitorRect.X+10), int32(performanceMonitorRect.Y+300), 280, 100, raylib.Red)
 }
 
+// calculateAverageFPS calculates the average FPS from the historical data
 func (pmd *PerformanceMonitorData) calculateAverageFPS() float64 {
+
+	// Calculate the sum of all FPS values
 	var sum int32
+
+	// Iterate over the FPS history
 	for _, fps := range pmd.FPSHistory {
 		sum += fps
 	}
 
-	avg := float64(sum) / float64(historySize)
-
-	return avg
+	// Calculate the average FPS
+	return (float64(sum) / float64(historySize))
 }
 
+// calculateAverageUpdateDuration calculates the average Update Duration from the historical data
 func (pmd *PerformanceMonitorData) calculateAverageUpdateDuration() time.Duration {
+
+	// Calculate the sum of all Update Duration values
 	var sum time.Duration
+
+	// Iterate over the Update Duration history
 	for _, updateDuration := range pmd.UpdateDurationHistory {
 		sum += updateDuration
 	}
+
+	// Calculate the average Update Duration
 	return sum / historySize
 }
 
+// calculateAverageRenderDuration calculates the average Render Duration from the historical data
 func (pmd *PerformanceMonitorData) calculateAverageRenderDuration() time.Duration {
+
+	// Calculate the sum of all Render Duration values
 	var sum time.Duration
+
+	// Iterate over the Render Duration history
 	for _, renderDuration := range pmd.RenderDurationHistory {
 		sum += renderDuration
 	}
+
+	// Calculate the average Render Duration
 	return sum / historySize
 }
 
+// calculateAverageTotalDuration calculates the average Total Duration from the historical data
 func (pmd *PerformanceMonitorData) calculateAverageTotalDuration() time.Duration {
+
+	// Calculate the sum of all Total Duration values
 	var sum time.Duration
+
+	// Iterate over the Total Duration history
 	for _, totalDuration := range pmd.TotalDurationHistory {
 		sum += totalDuration
 	}
+
+	// Calculate the average Total Duration
 	return sum / historySize
 }
 
@@ -224,6 +253,7 @@ func drawGraph(title string, data []int32, x int32, y int32, w int32, h int32, c
 		maxValue = 1
 	}
 
+	// Calculate vertical scale based on max value
 	scaleY := float32(h) / float32(maxValue)
 
 	// Calculate horizontal scale based on history size
@@ -232,6 +262,7 @@ func drawGraph(title string, data []int32, x int32, y int32, w int32, h int32, c
 		historySize = 1
 	}
 
+	// Calculate the horizontal scale
 	scaleX := float32(w) / float32(historySize)
 
 	// Plot data points
@@ -253,9 +284,14 @@ func drawGraph(title string, data []int32, x int32, y int32, w int32, h int32, c
 
 // Helper function to convert a slice of time.Duration to int64 (microseconds)
 func convertDurationsToInt32(durations []time.Duration) []int32 {
+
+	// Convert time.Duration to int32 (microseconds)
 	result := make([]int32, len(durations))
+
+	// Iterate over durations
 	for i, d := range durations {
 		result[i] = int32(d.Microseconds())
 	}
+
 	return result
 }

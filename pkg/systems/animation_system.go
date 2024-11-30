@@ -5,41 +5,66 @@ import (
 
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
 type AnimationSystem struct {
-	ecsManager *ecs.ECSManager
-	priority   int
+	manager  *ecs.Manager
+	priority int
 }
 
-func NewAnimationSystem(ecsM *ecs.ECSManager, p int) *AnimationSystem {
+func NewAnimationSystem(m *ecs.Manager, p int) *AnimationSystem {
 	return &AnimationSystem{
-		ecsManager: ecsM,
-		priority:   p,
+		manager:  m,
+		priority: p,
 	}
 }
 
 func (as *AnimationSystem) Update(dt float64) {
-	entities := as.ecsManager.GetComponentsManager().GetEntitiesWithComponents([]ecs.ComponentType{ecs.AnimationComponent})
 
+	// Get all entities with AnimationComponent
+	entities := as.manager.GetEntitiesWithComponents([]ecs.ComponentType{ecs.AnimationComponent})
+
+	// Iterate over all entities with AnimationComponent
 	for _, entity := range entities {
-		animationComp, animationCompExists := as.ecsManager.GetComponent(entity, ecs.AnimationComponent)
 
-		if !animationCompExists {
+		// Get the AnimationComponent
+		animationComp, exist := as.manager.GetComponent(entity, ecs.AnimationComponent)
+
+		// Check if the AnimationComponent exists
+		if !exist {
+			utils.ErrorLogger.Println("AnimationComponent does not exist")
 			continue
 		}
 
-		animation := animationComp.(*components.Animation)
+		// Cast the component to an Animation
+		animation, ok := animationComp.(*components.Animation)
 
+		// Check if the cast was successful
+		if !ok {
+			utils.ErrorLogger.Println("Failed to cast AnimationComponent to Animation")
+			continue
+		}
+
+		// Check if the animation is playing
 		if !animation.IsPlaying {
 			continue
 		}
 
+		// Update the animation
 		animation.ElapsedTime += time.Duration(dt * float64(time.Second))
+
+		// Check if the current frame duration has been reached
 		if animation.ElapsedTime >= animation.FrameDuration {
+
+			// Reset the elapsed time
 			animation.ElapsedTime = 0
 			animation.CurrentFrame++
+
+			// Check if the animation has reached the end
 			if animation.CurrentFrame >= len(animation.Frames) {
+
+				// Check if the animation is looping
 				if animation.IsLooping {
 					animation.CurrentFrame = 0
 				} else {
@@ -49,18 +74,27 @@ func (as *AnimationSystem) Update(dt float64) {
 		}
 
 		// Update the sprite's source rectangle
-		spriteComp, spriteCompExists := as.ecsManager.GetComponent(entity, ecs.SpriteComponent)
+		spriteComp, exist := as.manager.GetComponent(entity, ecs.SpriteComponent)
 
-		if !spriteCompExists {
+		if !exist {
+			utils.ErrorLogger.Println("SpriteComponent does not exist")
 			continue
 		}
 
-		sprite := spriteComp.(*components.Sprite)
+		// Cast the component to a Sprite
+		sprite, ok := spriteComp.(*components.Sprite)
 
+		if !ok {
+			utils.ErrorLogger.Println("Failed to cast SpriteComponent to Sprite")
+			continue
+		}
+
+		// Update the sprite's source rectangle
 		sprite.SourceRect = animation.Frames[animation.CurrentFrame]
 	}
 }
 
+// GetPriority returns the priority of the system
 func (as *AnimationSystem) GetPriority() int {
 	return as.priority
 }

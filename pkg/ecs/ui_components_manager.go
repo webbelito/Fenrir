@@ -10,6 +10,7 @@ type UIComponentType uint64
 // UIComponent is the interface that all UI components should implement
 type UIComponent interface{}
 
+// UIComponentsManager manages all UI components in the ECS
 type UIComponentsManager struct {
 	Components map[UIComponentType]map[uint64]UIComponent
 	compMutex  sync.RWMutex
@@ -28,6 +29,7 @@ func (cm *UIComponentsManager) AddComponent(eID uint64, ct UIComponentType, c UI
 	cm.compMutex.Lock()
 	defer cm.compMutex.Unlock()
 
+	// Initialize the component map if it doesn't exist
 	if _, exists := cm.Components[ct]; !exists {
 		cm.Components[ct] = make(map[uint64]UIComponent)
 	}
@@ -41,6 +43,7 @@ func (cm *UIComponentsManager) GetComponent(eID uint64, ct UIComponentType) (UIC
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
+	// Get the component map for the type
 	comps, compsExists := cm.Components[ct]
 	if !compsExists {
 		return nil, false
@@ -56,6 +59,7 @@ func (cm *UIComponentsManager) GetComponentsOfType(ct UIComponentType) (map[uint
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
+	// Get the component map for the type
 	comps, compsExists := cm.Components[ct]
 	if !compsExists {
 		return nil, false
@@ -69,6 +73,7 @@ func (cm *UIComponentsManager) GetEntitiesWithComponents(cts []UIComponentType) 
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
+	// If no component types are provided, return nil
 	if len(cts) == 0 {
 		return nil
 	}
@@ -77,8 +82,13 @@ func (cm *UIComponentsManager) GetEntitiesWithComponents(cts []UIComponentType) 
 	minIndex := 0
 	minCount := len(cm.Components[cts[0]])
 
+	// Find the smallest component type set
 	for i, ct := range cts {
+
+		// If a component type is found, check if it has the least number of components
 		if comps, compsExists := cm.Components[ct]; compsExists {
+
+			// If the component type has less components than the current smallest, update the smallest
 			if len(comps) < minCount {
 				minCount = len(comps)
 				minIndex = i
@@ -93,17 +103,26 @@ func (cm *UIComponentsManager) GetEntitiesWithComponents(cts []UIComponentType) 
 	smallestComps := cm.Components[cts[minIndex]]
 	entities := make([]uint64, 0, minCount)
 
+	// Iterate over the smallest component type set
 	for entity := range smallestComps {
 		hasAll := true
+
+		// Check if the entity has all the other component types
 		for i, ct := range cts {
+
+			// Skip the smallest component type
 			if i == minIndex {
 				continue
 			}
+
+			// If the entity does not have a component of the type, break the loop
 			if _, compExists := cm.Components[ct][entity]; !compExists {
 				hasAll = false
 				break
 			}
 		}
+
+		// If the entity has all the component types, add it to the list
 		if hasAll {
 			entities = append(entities, entity)
 		}
@@ -117,6 +136,7 @@ func (cm *UIComponentsManager) RemoveComponent(eID uint64, ct UIComponentType) {
 	cm.compMutex.Lock()
 	defer cm.compMutex.Unlock()
 
+	// Get the component map for the type
 	if comps, compsExists := cm.Components[ct]; compsExists {
 		delete(comps, eID)
 	}
@@ -127,6 +147,7 @@ func (cm *UIComponentsManager) DestroyEntityComponents(eID uint64) {
 	cm.compMutex.Lock()
 	defer cm.compMutex.Unlock()
 
+	// Iterate over all component types
 	for _, components := range cm.Components {
 		delete(components, eID)
 	}

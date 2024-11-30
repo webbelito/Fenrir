@@ -5,37 +5,58 @@ import (
 
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
+	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// ParticleSystem is a system that handles particles
 type ParticleSystem struct {
-	ecsManager *ecs.ECSManager
-	priority   int
+	manager  *ecs.Manager
+	priority int
 }
 
-func NewParticleSystem(ecsM *ecs.ECSManager, p int) *ParticleSystem {
+// NewParticleSystem creates a new ParticleSystem
+func NewParticleSystem(m *ecs.Manager, p int) *ParticleSystem {
 	return &ParticleSystem{
-		ecsManager: ecsM,
-		priority:   p,
+		manager:  m,
+		priority: p,
 	}
 }
 
 func (ps *ParticleSystem) Update(dt float64) {
-	entities := ps.ecsManager.GetComponentsManager().GetEntitiesWithComponents([]ecs.ComponentType{ecs.ParticleEmitterComponent})
-	for _, entity := range entities {
-		emitterComp, emitterCompExists := ps.ecsManager.GetComponent(entity, ecs.ParticleEmitterComponent)
 
+	// Get all entities with ParticleEmitterComponent
+	entities := ps.manager.GetEntitiesWithComponents([]ecs.ComponentType{ecs.ParticleEmitterComponent})
+
+	// Iterate over all entities with ParticleEmitterComponent
+	for _, entity := range entities {
+
+		// Get the ParticleEmitterComponent
+		emitterComp, emitterCompExists := ps.manager.GetComponent(entity, ecs.ParticleEmitterComponent)
+
+		// Check if the ParticleEmitterComponent exists
 		if !emitterCompExists {
+			utils.ErrorLogger.Println("ParticleEmitterComponent does not exist")
 			continue
 		}
 
-		emitter := emitterComp.(*components.ParticleEmitter)
+		// Cast the component to a ParticleEmitter
+		emitter, ok := emitterComp.(*components.ParticleEmitter)
+
+		// Check if the cast was successful
+		if !ok {
+			utils.ErrorLogger.Println("Failed to cast ParticleEmitterComponent to ParticleEmitter")
+			continue
+		}
 
 		// Emit new particles
 		if emitter.IsEmitting && time.Since(emitter.LastEmitTime) > time.Second/time.Duration(emitter.EmitRate) {
+
+			// Reset the last emit time
 			emitter.LastEmitTime = time.Now()
 
+			// Create a new particle
 			particle := &components.Particle{
 				Position:     raylib.Vector2{X: 500, Y: 500},
 				Velocity:     raylib.NewVector2(float32(raylib.GetRandomValue(-50, 50)), float32(raylib.GetRandomValue(-50, 50))),
@@ -45,14 +66,21 @@ func (ps *ParticleSystem) Update(dt float64) {
 				Lifetime:     emitter.ParticleLifetime,
 				Age:          0,
 			}
+
+			// Add the particle to the emitter
 			emitter.Particles = append(emitter.Particles, particle)
 		}
 
-		// Update particles
+		// Create a new slice to store alive particles
 		aliveParticles := []*components.Particle{}
+
+		// Iterate over all particles
 		for _, particle := range emitter.Particles {
+
+			// Update particle age
 			particle.Age += time.Duration(dt * float64(time.Second))
 
+			// Check if the particle is alive
 			if particle.Age < particle.Lifetime {
 				// Update particle physics
 				particle.Velocity = raylib.Vector2Add(particle.Velocity, raylib.Vector2Scale(particle.Acceleration, float32(dt)))
@@ -60,10 +88,15 @@ func (ps *ParticleSystem) Update(dt float64) {
 				aliveParticles = append(aliveParticles, particle)
 			}
 		}
+
+		// Update the particles slice
 		emitter.Particles = aliveParticles
 	}
 }
 
+/*
+GetPriority returns the priority of the system
+*/
 func (ps *ParticleSystem) GetPriority() int {
 	return ps.priority
 }

@@ -2,31 +2,28 @@ package scenes
 
 import (
 	"github.com/webbelito/Fenrir/pkg/ecs"
-	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raygui "github.com/gen2brain/raylib-go/raygui"
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// PauseScene is a scene for the pause menu
 type PauseScene struct {
 	sceneManager *SceneManager
-	ecsManager   *ecs.ECSManager
+	manager      *ecs.Manager
 	sceneData    *SceneData
 
-	entities      []*ecs.Entity
-	logicSystems  []systeminterfaces.UpdatableSystemInterface
-	renderSystems []systeminterfaces.RenderableSystemInterface
+	sceneEntities []*ecs.Entity
 }
 
-func NewPauseScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *PauseScene {
+// NewPauseScene creates a new PauseScene
+func NewPauseScene(sm *SceneManager, m *ecs.Manager, sd *SceneData) *PauseScene {
 	return &PauseScene{
 		sceneManager:  sm,
-		ecsManager:    em,
+		manager:       m,
 		sceneData:     sd,
-		entities:      []*ecs.Entity{},
-		logicSystems:  []systeminterfaces.UpdatableSystemInterface{},
-		renderSystems: []systeminterfaces.RenderableSystemInterface{},
+		sceneEntities: []*ecs.Entity{},
 	}
 }
 
@@ -36,6 +33,14 @@ func (ps *PauseScene) Initialize() {
 }
 
 func (ps *PauseScene) Update(dt float64) {
+
+	// Check if the ECS Manager is nil
+	if ps.manager == nil {
+		utils.ErrorLogger.Println("PauseScene: ECS Manager is nil")
+		return
+	}
+
+	// Handle Pause Input
 	if raylib.IsKeyPressed(raylib.KeyP) || raylib.IsKeyPressed(raylib.KeyEscape) {
 
 		// Resume the game
@@ -90,8 +95,6 @@ func (ps *PauseScene) Render() {
 func (ps *PauseScene) Cleanup() {
 	// Remove all entities created by this scene
 	ps.RemoveAllEntities()
-
-	// Cleanup if necessary
 }
 
 func (ps *PauseScene) Pause() {
@@ -106,13 +109,24 @@ func (ps *PauseScene) Resume() {
 	// For example, resume certain systems or timers
 }
 
+/*
+AddEntity adds an entity to the scene entity list
+Usage is to identify which entities were created by the scene
+*/
 func (ps *PauseScene) AddEntity(eID *ecs.Entity) {
-	ps.entities = append(ps.entities, eID)
+	ps.sceneEntities = append(ps.sceneEntities, eID)
 }
 
+/*
+RemoveAllEntities removes all entities created by the scene
+*/
 func (ps *PauseScene) RemoveAllEntities() {
-	for _, entity := range ps.entities {
-		ps.ecsManager.DestroyEntity(entity.ID)
+
+	// Iterate over all entities created by the scene
+	for _, entity := range ps.sceneEntities {
+		ps.manager.DestroyEntity(entity.ID)
 	}
-	ps.entities = []*ecs.Entity{}
+
+	// Clear the scene entities list
+	ps.sceneEntities = []*ecs.Entity{}
 }

@@ -32,6 +32,7 @@ func (cm *ComponentsManager) AddComponent(eID uint64, ct ComponentType, c Compon
 	cm.compMutex.Lock()
 	defer cm.compMutex.Unlock()
 
+	// Initialize the component map if it doesn't exist
 	if _, exists := cm.Components[ct]; !exists {
 		cm.Components[ct] = make(map[uint64]Component)
 	}
@@ -46,12 +47,15 @@ func (cm *ComponentsManager) GetComponent(eID uint64, ct ComponentType) (Compone
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
+	// Get the component map for the type
 	comps, compsExists := cm.Components[ct]
 
+	// If the component map doesn't exist, return false
 	if !compsExists {
 		return nil, false
 	}
 
+	// Get the component from the map
 	comp, compExists := comps[eID]
 	return comp, compExists
 
@@ -63,8 +67,10 @@ func (cm *ComponentsManager) GetComponentsOfType(ct ComponentType) (map[uint64]C
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
+	// Get the component map for the type
 	comps, compsExists := cm.Components[ct]
 
+	// If the component map doesn't exist, return false
 	if !compsExists {
 		return nil, false
 	}
@@ -76,6 +82,7 @@ func (cm *ComponentsManager) GetEntitiesWithComponents(cts []ComponentType) []ui
 	cm.compMutex.RLock()
 	defer cm.compMutex.RUnlock()
 
+	// If no component types are provided, return nil
 	if len(cts) == 0 {
 		return nil
 	}
@@ -84,8 +91,13 @@ func (cm *ComponentsManager) GetEntitiesWithComponents(cts []ComponentType) []ui
 	minIndex := 0
 	minCount := len(cm.Components[cts[0]])
 
+	// Find the component type with the least number of components
 	for i, ct := range cts {
+
+		// If a component type is found, check if it has the least number of components
 		if comps, exists := cm.Components[ct]; exists {
+
+			// If the number of components is less than the current minimum, update the minimum
 			if len(comps) < minCount {
 				minCount = len(comps)
 				minIndex = i
@@ -100,17 +112,26 @@ func (cm *ComponentsManager) GetEntitiesWithComponents(cts []ComponentType) []ui
 	smallestComps := cm.Components[cts[minIndex]]
 	entities := make([]uint64, 0, minCount)
 
+	// Iterate over the entities with the smallest component type
 	for entity := range smallestComps {
 		hasAll := true
+
+		// Check if the entity has all the required components
 		for i, ct := range cts {
+
+			// Skip the smallest component type
 			if i == minIndex {
 				continue
 			}
+
+			// If the entity doesn't have a component of the type, break the loop
 			if _, exists := cm.Components[ct][entity]; !exists {
 				hasAll = false
 				break
 			}
 		}
+
+		// If the entity has all the required components, add it to the list
 		if hasAll {
 			entities = append(entities, entity)
 		}
@@ -123,8 +144,10 @@ func (cm *ComponentsManager) GetEntitiesWithComponents(cts []ComponentType) []ui
 func (cm *ComponentsManager) RemoveComponent(eID uint64, ct ComponentType) {
 
 	cm.compMutex.Lock()
-	delete(cm.Components[ct], eID)
 	defer cm.compMutex.Unlock()
+
+	// Remove the component from the map
+	delete(cm.Components[ct], eID)
 
 }
 
@@ -133,6 +156,7 @@ func (cm *ComponentsManager) DestroyEntityComponents(id uint64) {
 	cm.compMutex.Lock()
 	defer cm.compMutex.Unlock()
 
+	// Remove the entity's components from all component maps
 	for _, components := range cm.Components {
 		delete(components, id)
 	}

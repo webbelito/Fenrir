@@ -6,6 +6,7 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// Animation is a component that holds an animation
 type Animation struct {
 	Frames        []raylib.Rectangle
 	CurrentFrame  int

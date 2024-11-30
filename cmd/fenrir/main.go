@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/scenes"
 	"github.com/webbelito/Fenrir/pkg/systems"
@@ -28,15 +29,28 @@ func main() {
 	raygui.SetStyle(raylib.FontDefault, raygui.TEXT_SIZE, 20)
 
 	// Initialize ECS Manager
-	ecsManager := ecs.NewECSManager()
+	ecsManager := ecs.NewManager()
+
+	// * Create the first entity (Camera)
+	cameraEntity := ecsManager.CreateEntity()
+	ecsManager.AddComponent(cameraEntity.ID, ecs.CameraComponent, &components.Camera{
+		OwnerEntity: cameraEntity.ID,
+		Target:      raylib.Vector2{X: 0, Y: 0},
+		Offset:      raylib.Vector2{X: float32(raylib.GetScreenWidth()) / 2, Y: float32(raylib.GetScreenHeight()) / 2},
+		Zoom:        1.0,
+	})
+
+	// Initialize Camera System
+	cameraSystem := systems.NewCameraSystem(ecsManager, 0)
+	ecsManager.RegisterSystem(cameraSystem, cameraSystem.GetPriority())
 
 	// Initialize UI System
-	UISystem := systems.NewUISystem(ecsManager, 0)
-	ecsManager.AddUIRenderSystem(UISystem, UISystem.GetPriority())
+	UISystem := systems.NewUISystem(ecsManager, 1)
+	ecsManager.RegisterSystem(UISystem, UISystem.GetPriority())
 
 	// Initialize Event Listener System
-	EventsListenerSystem := systems.NewEventsListenerSystem(ecsManager, 0)
-	ecsManager.AddLogicSystem(EventsListenerSystem, EventsListenerSystem.GetPriority())
+	EventsListenerSystem := systems.NewEventsListenerSystem(ecsManager, 2)
+	ecsManager.RegisterSystem(EventsListenerSystem, EventsListenerSystem.GetPriority())
 
 	// Initialize Scene Manager
 	sceneManager := scenes.NewSceneManager(ecsManager)
@@ -76,7 +90,6 @@ func main() {
 
 		if currentScene != nil {
 			currentScene.Render()
-			ecsManager.RenderUISystems()
 		}
 
 		raylib.EndDrawing()

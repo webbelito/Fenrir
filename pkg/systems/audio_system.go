@@ -4,36 +4,54 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
-	"github.com/webbelito/Fenrir/pkg/resources"
+	"github.com/webbelito/Fenrir/pkg/utils"
 )
 
+// AudioSystem is a system that handles audio
 type AudioSystem struct {
-	ecsManager      *ecs.ECSManager
-	resourceManager *resources.ResourcesManager
-	priority        int
+	manager  *ecs.Manager
+	priority int
 }
 
-func NewAudioSystem(ecsM *ecs.ECSManager, rm *resources.ResourcesManager, p int) *AudioSystem {
+// NewAudioSystem creates a new AudioSystem
+func NewAudioSystem(m *ecs.Manager, p int) *AudioSystem {
 	return &AudioSystem{
-		ecsManager:      ecsM,
-		resourceManager: rm,
-		priority:        p,
+		manager:  m,
+		priority: p,
 	}
 }
 
 func (as *AudioSystem) Update(dt float64) {
-	audioEntities := as.ecsManager.GetComponentsManager().GetEntitiesWithComponents([]ecs.ComponentType{ecs.AudioSourceComponent})
-	for _, entity := range audioEntities {
-		audioComp, audioCompExists := as.ecsManager.GetComponent(entity, ecs.AudioSourceComponent)
 
-		if !audioCompExists {
+	// Get all entities with AudioSourceComponent
+	audioEntities := as.manager.GetEntitiesWithComponents([]ecs.ComponentType{ecs.AudioSourceComponent})
+
+	// Iterate over all entities with AudioSourceComponent
+	for _, entity := range audioEntities {
+
+		// Get the AudioSourceComponent
+		audioComp, exist := as.manager.GetComponent(entity, ecs.AudioSourceComponent)
+
+		// Check if the AudioSourceComponent exists
+		if !exist {
+			utils.ErrorLogger.Println("AudioSourceComponent does not exist")
 			continue
 		}
 
-		audio := audioComp.(*components.AudioSource)
+		// Cast the component to an AudioSource
+		audio, ok := audioComp.(*components.AudioSource)
 
+		// Check if the cast was successful
+		if !ok {
+			utils.ErrorLogger.Println("Failed to cast AudioSourceComponent to AudioSource")
+			continue
+		}
+
+		// Play sound
 		if audio.ShouldPlay {
 			raylib.PlaySound(audio.Sound)
+
+			// Reset ShouldPlay
 			audio.ShouldPlay = false
 		}
 
@@ -47,6 +65,7 @@ func (as *AudioSystem) Update(dt float64) {
 	}
 }
 
+// GetPriority returns the priority of the system
 func (as *AudioSystem) GetPriority() int {
 	return as.priority
 }

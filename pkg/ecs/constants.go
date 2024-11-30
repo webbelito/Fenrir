@@ -14,6 +14,7 @@ const (
 	ParticleEmitterComponent
 	AnimationComponent
 	AudioSourceComponent
+	CameraComponent
 )
 
 // Component types for UI components with an offset of 100

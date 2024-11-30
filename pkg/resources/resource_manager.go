@@ -14,8 +14,8 @@ type ResourcesManager struct {
 	mutex    sync.RWMutex
 }
 
-// NewResourceManager creates a new ResourceManager.
-func NewResourceManager() *ResourcesManager {
+// NewResourcesManager creates a new ResourceManager.
+func NewResourcesManager() *ResourcesManager {
 	return &ResourcesManager{
 		textures: make(map[string]raylib.Texture2D),
 		sounds:   make(map[string]raylib.Sound),

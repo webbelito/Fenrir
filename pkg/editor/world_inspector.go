@@ -9,18 +9,21 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// WorldInspector is a struct that represents the World Inspector
 type WorldInspector struct {
 	windowPosition raylib.Vector2
-	ecsManager     *ecs.ECSManager
+	manager        *ecs.Manager
 }
 
-func NewWorldInspector(ecsM *ecs.ECSManager) *WorldInspector {
+// NewWorldInspector creates a new WorldInspector
+func NewWorldInspector(m *ecs.Manager) *WorldInspector {
 	return &WorldInspector{
 		windowPosition: raylib.NewVector2(0, 0),
-		ecsManager:     ecsM,
+		manager:        m,
 	}
 }
 
+// SetPosition sets the position of the World Inspector
 func (wi *WorldInspector) SetPosition(position raylib.Vector2) {
 	wi.windowPosition = position
 }
@@ -50,8 +53,10 @@ func (wi *WorldInspector) Render() {
 		Height: 20,
 	}
 
-	entityCount := wi.ecsManager.GetEntityCount()
+	// Get the entity count from the ECS Manager
+	entityCount := wi.manager.GetEntityCount()
 
+	// Create the display text for the entity count label
 	displayText := fmt.Sprintf("Active Entities: %d", entityCount)
 
 	// Draw the entity count label

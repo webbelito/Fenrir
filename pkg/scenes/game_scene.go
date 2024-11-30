@@ -6,27 +6,23 @@ import (
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 	"github.com/webbelito/Fenrir/pkg/editor"
-	systeminterfaces "github.com/webbelito/Fenrir/pkg/interfaces/systeminterfaces"
 	"github.com/webbelito/Fenrir/pkg/physics"
 	physicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
 	physicssystems "github.com/webbelito/Fenrir/pkg/physics/systems"
-	"github.com/webbelito/Fenrir/pkg/resources"
 	"github.com/webbelito/Fenrir/pkg/systems"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// GameScene is a struct that represents a game scene
 type GameScene struct {
-	sceneManager    *SceneManager
-	resourceManager *resources.ResourcesManager
-	ecsManager      *ecs.ECSManager
-	sceneData       *SceneData
-	perfMonitor     *editor.PerformanceMonitor
+	sceneManager *SceneManager
+	manager      *ecs.Manager
+	sceneData    *SceneData
+	perfMonitor  *editor.PerformanceMonitor
 
-	entities      []*ecs.Entity
-	logicSystems  []systeminterfaces.UpdatableSystemInterface
-	renderSystems []systeminterfaces.RenderableSystemInterface
+	entities []*ecs.Entity
 
 	// Performance Metrics
 	updateDuration time.Duration
@@ -36,25 +32,24 @@ type GameScene struct {
 	playerEntity *ecs.Entity
 }
 
-func NewGameScene(sm *SceneManager, em *ecs.ECSManager, sd *SceneData) *GameScene {
+// NewGameScene creates a new GameScene
+func NewGameScene(sm *SceneManager, m *ecs.Manager, sd *SceneData) *GameScene {
 	return &GameScene{
-		sceneManager:    sm,
-		resourceManager: resources.NewResourceManager(),
-		ecsManager:      em,
-		sceneData:       sd,
-		updateDuration:  0,
-		renderDuration:  0,
-		totalDuration:   0,
-		entities:        []*ecs.Entity{},
-		logicSystems:    []systeminterfaces.UpdatableSystemInterface{},
-		renderSystems:   []systeminterfaces.RenderableSystemInterface{},
+		sceneManager:   sm,
+		manager:        m,
+		sceneData:      sd,
+		updateDuration: 0,
+		renderDuration: 0,
+		totalDuration:  0,
+		entities:       []*ecs.Entity{},
 	}
 }
 
+// Initialize initializes the Game Scene
 func (gs *GameScene) Initialize() {
 
 	// * Editor Init
-	editorManager := editor.NewEditorManager(gs.ecsManager, 1)
+	editorManager := editor.NewEditorManager(gs.manager, 1)
 
 	// * Resource Manager Init
 
@@ -63,19 +58,17 @@ func (gs *GameScene) Initialize() {
 	// * Input System Init
 
 	inputSystem := systems.NewInputSystem(
-		gs.ecsManager,
+		gs.manager,
 		editorManager,
 		2,
 	)
 
-	gs.ecsManager.AddLogicSystem(inputSystem, inputSystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, inputSystem)
+	gs.manager.RegisterSystem(inputSystem, inputSystem.GetPriority())
 
 	// * Movement System Init
 
-	movementSystem := systems.NewMovementSystem(gs.ecsManager, 3)
-	gs.ecsManager.AddLogicSystem(movementSystem, movementSystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, movementSystem)
+	movementSystem := systems.NewMovementSystem(gs.manager, 3)
+	gs.manager.RegisterSystem(movementSystem, movementSystem.GetPriority())
 
 	// Add more systems as needed...
 
@@ -85,9 +78,8 @@ func (gs *GameScene) Initialize() {
 	gravity := raylib.NewVector2(0, 980)
 
 	// Initialize the RigidBodySystem
-	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.ecsManager, gravity, 4)
-	gs.ecsManager.AddLogicSystem(rigidBodySystem, rigidBodySystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, rigidBodySystem)
+	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.manager, gravity, 4)
+	gs.manager.RegisterSystem(rigidBodySystem, rigidBodySystem.GetPriority())
 
 	// * Collision System Init
 
@@ -98,16 +90,17 @@ func (gs *GameScene) Initialize() {
 		Height:   float32(raylib.GetScreenHeight()),
 	}
 
+	// Initialize the CollisionSystem
 	csCapacity := int32(4)
 	maxDepth := int32(5)
 	capacityDepth := int32(0)
 
-	collisionSystem := physicssystems.NewCollisionSystem(gs.ecsManager, quadBoundary, csCapacity, maxDepth, capacityDepth, 5)
-	gs.ecsManager.AddLogicSystem(collisionSystem, collisionSystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, collisionSystem)
+	collisionSystem := physicssystems.NewCollisionSystem(gs.manager, quadBoundary, csCapacity, maxDepth, capacityDepth, 5)
+	gs.manager.RegisterSystem(collisionSystem, collisionSystem.GetPriority())
 
 	// * Render Init
 
+	// Initialize the RenderSystem
 	screenBoundry := raylib.Rectangle{
 		X:      0,
 		Y:      0,
@@ -115,46 +108,39 @@ func (gs *GameScene) Initialize() {
 		Height: float32(raylib.GetScreenHeight()),
 	}
 
-	renderSystem := systems.NewRenderSystem(gs.ecsManager, screenBoundry, gs.resourceManager, 0)
-	gs.ecsManager.AddRenderSystem(renderSystem, renderSystem.GetPriority())
-	gs.renderSystems = append(gs.renderSystems, renderSystem)
+	renderSystem := systems.NewRenderSystem(gs.manager, screenBoundry, 0)
+	gs.manager.RegisterSystem(renderSystem, renderSystem.GetPriority())
 
 	// * Editor Systems
 
-	gs.ecsManager.AddLogicSystem(editorManager, editorManager.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, editorManager)
-
-	gs.ecsManager.AddRenderSystem(editorManager, 1)
-	gs.renderSystems = append(gs.renderSystems, editorManager)
+	// Register the Editor Manager
+	gs.manager.RegisterSystem(editorManager, editorManager.GetPriority())
 
 	// * Particle System
 
-	particleSystem := systems.NewParticleSystem(gs.ecsManager, 6)
-	gs.ecsManager.AddLogicSystem(particleSystem, particleSystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, particleSystem)
+	// Initialize the Particle System
+	particleSystem := systems.NewParticleSystem(gs.manager, 6)
+	gs.manager.RegisterSystem(particleSystem, particleSystem.GetPriority())
 
-	particleRenderSystem := systems.NewParticleRenderSystem(gs.ecsManager, 2)
-	gs.ecsManager.AddRenderSystem(particleRenderSystem, particleRenderSystem.GetPriority())
-	gs.renderSystems = append(gs.renderSystems, particleRenderSystem)
+	// * Particle Render System
+	particleRenderSystem := systems.NewParticleRenderSystem(gs.manager, 2)
+	gs.manager.RegisterSystem(particleRenderSystem, particleRenderSystem.GetPriority())
 
 	// * Animation System
-	animationSystem := systems.NewAnimationSystem(gs.ecsManager, 7)
-	gs.ecsManager.AddLogicSystem(animationSystem, animationSystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, animationSystem)
+	animationSystem := systems.NewAnimationSystem(gs.manager, 7)
+	gs.manager.RegisterSystem(animationSystem, animationSystem.GetPriority())
 
 	// * Camera System
 	// TODO: Move this to a persistent system
-	cameraSystem := systems.NewCameraSystem(gs.ecsManager, 8)
-	gs.ecsManager.AddLogicSystem(cameraSystem, cameraSystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, cameraSystem)
+	cameraSystem := systems.NewCameraSystem(gs.manager, 8)
+	gs.manager.RegisterSystem(cameraSystem, cameraSystem.GetPriority())
 
 	// Assign the camera system to the Render System
 	renderSystem.SetCameraSystem(cameraSystem)
 
 	// * Audio System
-	audioSystem := systems.NewAudioSystem(gs.ecsManager, gs.resourceManager, 9)
-	gs.ecsManager.AddLogicSystem(audioSystem, audioSystem.GetPriority())
-	gs.logicSystems = append(gs.logicSystems, audioSystem)
+	audioSystem := systems.NewAudioSystem(gs.manager, 9)
+	gs.manager.RegisterSystem(audioSystem, audioSystem.GetPriority())
 
 	// Initialize Entities based on Scene Data
 	gs.initializeEntities()
@@ -173,7 +159,7 @@ func (gs *GameScene) Update(dt float64) {
 
 	// Update ECS Manager
 	updateStart := time.Now()
-	gs.ecsManager.UpdateLogicSystems(dt)
+	gs.manager.Update(dt)
 
 	// TODO: Remove the temporary input handling
 	if raylib.IsKeyPressed(raylib.KeyEscape) {
@@ -183,6 +169,7 @@ func (gs *GameScene) Update(dt float64) {
 		}
 	}
 
+	// Calculate Performance Metrics
 	gs.updateDuration = time.Since(updateStart)
 }
 
@@ -190,7 +177,7 @@ func (gs *GameScene) Render() {
 
 	// Render ECS Manager
 	renderStart := time.Now()
-	gs.ecsManager.UpdateRenderSystems()
+	gs.manager.Render()
 
 	// Calculate Performance Metrics
 	gs.renderDuration = time.Since(renderStart)
@@ -198,57 +185,57 @@ func (gs *GameScene) Render() {
 
 }
 
+// Cleanup cleans up the Game Scene
 func (gs *GameScene) Cleanup() {
 	// Remove all entities created by this scene
 	gs.RemoveAllEntities()
 
-	// Remove and cleanup logic system
-	for _, system := range gs.logicSystems {
-		gs.ecsManager.RemoveLogicSystem(system)
-	}
-	gs.logicSystems = nil
-
-	// Remove and cleanup render system
-	for _, system := range gs.renderSystems {
-		gs.ecsManager.RemoveRenderSystem(system)
-	}
+	// TODO: Add the support for cleaning up systems
 
 	// Cleanup resources
 	gs.perfMonitor = nil
 	raylib.CloseAudioDevice()
 }
 
+// Pause pauses the Game Scene
 func (gs *GameScene) Pause() {
 	// TODO: Implement Pause functionality
 	// Pause game logic if necessary
 	// For example, stop certain systems or timers
 }
 
+// Resume resumes the Game Scene
 func (gs *GameScene) Resume() {
 	// TODO: Implement Resume functionality
 	// Resume game logic if necessary
 	// For example, resume certain systems or timers
 }
 
+// AddEntity adds an entity to the Game Scene
 func (gs *GameScene) AddEntity(e *ecs.Entity) {
 	gs.entities = append(gs.entities, e)
 }
 
+// RemoveEntity removes an entity from the Game Scene
 func (gs *GameScene) RemoveAllEntities() {
+
+	// Iterate over all entities and destroy
 	for _, eID := range gs.entities {
-		gs.ecsManager.DestroyEntity(eID.ID)
+		gs.manager.DestroyEntity(eID.ID)
 	}
 
+	// Clear the entities slice
 	gs.entities = []*ecs.Entity{}
 }
 
+// initializeEntities initializes entities based on the scene data
 func (gs *GameScene) initializeEntities() {
 
 	// Iterate over all entities in the scene data
 	for _, entityData := range gs.sceneData.Entities {
 
 		// Create a new entity
-		entity := gs.ecsManager.CreateEntity()
+		entity := gs.manager.CreateEntity()
 
 		// Track the entity
 		gs.AddEntity(entity)
@@ -258,25 +245,36 @@ func (gs *GameScene) initializeEntities() {
 
 			switch compName {
 			case "Transform2D":
+
+				// Extract the component data
 				compMap := compData.(map[string]interface{})
+
+				// Extract the position, rotation and scale data
 				position := compMap["position"].(map[string]interface{})
 				rotation := compMap["rotation"].(float64)
 				scale := compMap["scale"].(map[string]interface{})
 
+				// Create a new Transform2D component
 				transform := &components.Transform2D{
 					Position: raylib.NewVector2(float32(position["x"].(float64)), float32(position["y"].(float64))),
 					Rotation: float32(rotation),
 					Scale:    raylib.NewVector2(float32(scale["x"].(float64)), float32(scale["y"].(float64))),
 				}
 
-				gs.ecsManager.AddComponent(entity.ID, ecs.Transform2DComponent, transform)
+				// Add the Transform2D component to the entity
+				gs.manager.AddComponent(entity.ID, ecs.Transform2DComponent, transform)
 
 			case "Sprite":
+
+				// Extract the component data
 				compMap := compData.(map[string]interface{})
+
+				// Extract the source rectangle, origin and color data
 				sourceRect := compMap["sourceRect"].(map[string]interface{})
 				origin := compMap["origin"].(map[string]interface{})
 				color := compMap["color"].(string)
 
+				// Create a new Sprite component
 				sprite := &components.Sprite{
 					TexturePath: compMap["texture_path"].(string),
 					SourceRect:  raylib.NewRectangle(float32(sourceRect["x"].(float64)), float32(sourceRect["y"].(float64)), float32(sourceRect["width"].(float64)), float32(sourceRect["height"].(float64))),
@@ -284,13 +282,19 @@ func (gs *GameScene) initializeEntities() {
 					Color:       utils.GetColorFromString(color),
 				}
 
-				gs.ecsManager.AddComponent(entity.ID, ecs.SpriteComponent, sprite)
+				// Add the Sprite component to the entity
+				gs.manager.AddComponent(entity.ID, ecs.SpriteComponent, sprite)
 
 			case "RigidBody":
+
+				// Extract the component data
 				compMap := compData.(map[string]interface{})
+
+				// Extract the velocity and acceleration data
 				velocity := compMap["velocity"].(map[string]interface{})
 				acceleration := compMap["acceleration"].(map[string]interface{})
 
+				// Create a new RigidBody component
 				rigidbody := &physicscomponents.RigidBody{
 					Mass:         float32(compMap["mass"].(float64)),
 					Velocity:     raylib.NewVector2(float32(velocity["x"].(float64)), float32(velocity["y"].(float64))),
@@ -301,41 +305,67 @@ func (gs *GameScene) initializeEntities() {
 					IsStatic:     compMap["is_static"].(bool),
 				}
 
-				gs.ecsManager.AddComponent(entity.ID, ecs.RigidBodyComponent, rigidbody)
+				// Add the RigidBody component to the entity
+				gs.manager.AddComponent(entity.ID, ecs.RigidBodyComponent, rigidbody)
 
 			case "BoxCollider":
+
+				// Extract the component data
 				compMap := compData.(map[string]interface{})
+
+				// Extract the size data
 				size := compMap["size"].(map[string]interface{})
+
+				// Create a new BoxCollider component
 				boxCollider := &physicscomponents.BoxCollider{
 					Type: compMap["type"].(string),
 					Size: raylib.NewVector2(float32(size["x"].(float64)), float32(size["y"].(float64))),
 				}
 
-				gs.ecsManager.AddComponent(entity.ID, ecs.BoxColliderComponent, boxCollider)
+				// Add the BoxCollider component to the entity
+				gs.manager.AddComponent(entity.ID, ecs.BoxColliderComponent, boxCollider)
 
 			case "Color":
+
+				// Extract the component data
 				compMap := compData.(map[string]interface{})
+
+				// Create a new Color component
 				color := utils.GetColorFromString(compMap["color"].(string))
-				gs.ecsManager.AddComponent(entity.ID, ecs.ColorComponent, &components.Color{Color: color})
+
+				// Add the Color component to the entity
+				gs.manager.AddComponent(entity.ID, ecs.ColorComponent, &components.Color{Color: color})
 
 			case "Player":
+
+				// Extract the component data
 				compMap := compData.(map[string]interface{})
+
+				// Create a new Player component
 				player := &components.Player{
 					Name: compMap["name"].(string),
 				}
-				gs.ecsManager.AddComponent(entity.ID, ecs.PlayerComponent, player)
+				// Add the Player component to the entity
+				gs.manager.AddComponent(entity.ID, ecs.PlayerComponent, player)
+
 			case "AudioSource":
+
+				// Extract the component data
 				compMap := compData.(map[string]interface{})
+
+				// Extract the file path, volume and isLooping data
 				filePath := compMap["file_path"].(string)
 				volume := float32(compMap["volume"].(float64))
 				isLooping := compMap["is_looping"].(bool)
 
-				sound, err := gs.resourceManager.LoadSound(filePath)
+				// Load the sound file
+				sound, err := gs.manager.LoadSound(filePath)
 				if err != nil {
 					utils.ErrorLogger.Printf("Failed to load sound: %s", err)
 					continue
 				}
 
+				// Create a new AudioSource component
 				audioSource := &components.AudioSource{
 					FilePath:  filePath,
 					Volume:    volume,
@@ -343,7 +373,8 @@ func (gs *GameScene) initializeEntities() {
 					Sound:     sound,
 				}
 
-				gs.ecsManager.AddComponent(entity.ID, ecs.AudioSourceComponent, audioSource)
+				// Add the AudioSource component to the entity
+				gs.manager.AddComponent(entity.ID, ecs.AudioSourceComponent, audioSource)
 
 			// Add more components as needed...
 
@@ -351,11 +382,12 @@ func (gs *GameScene) initializeEntities() {
 				utils.ErrorLogger.Printf("Component %s not recognized", compName)
 			}
 
+			// Assign the player entity
 			gs.playerEntity = entity
 		}
 
 		// TODO: Remove this temporary code
-
+		// * Particle Emitter example
 		/*
 			// Create dust emitter entity
 			particleEmitter := &components.ParticleEmitter{
@@ -371,7 +403,9 @@ func (gs *GameScene) initializeEntities() {
 		*/
 
 		// TODO: Remove this temporary code
+		//* Animation example
 
+		// Create an Animation component
 		frames := []raylib.Rectangle{
 			raylib.NewRectangle(0, 0, 32, 32),
 			raylib.NewRectangle(32, 0, 32, 32),
@@ -379,6 +413,7 @@ func (gs *GameScene) initializeEntities() {
 			raylib.NewRectangle(96, 0, 32, 32),
 		}
 
+		// Create an Animation component
 		animation := &components.Animation{
 			Frames:        frames,
 			CurrentFrame:  0,
@@ -387,16 +422,21 @@ func (gs *GameScene) initializeEntities() {
 			IsPlaying:     true,
 		}
 
-		gs.ecsManager.AddComponent(entity.ID, ecs.AnimationComponent, animation)
+		// Add the Animation component to the entity
+		gs.manager.AddComponent(entity.ID, ecs.AnimationComponent, animation)
 
 	}
 }
 
+// initializeEnvironment initializes the environment settings
 func (gs *GameScene) initializeEnvironment() {
+
+	// Set the background color
 	env := gs.sceneData.Environment
 	bgColor := utils.GetColorFromString(env.BackgroundColor)
 	raylib.ClearBackground(bgColor)
 
+	// Music settings
 	if env.Music != "" {
 		raylib.InitAudioDevice()
 		music := raylib.LoadMusicStream(env.Music)
@@ -406,6 +446,7 @@ func (gs *GameScene) initializeEnvironment() {
 	}
 }
 
+// spawnEntities spawns entities with random positions and colors
 func (gs *GameScene) spawnEntities(count int) {
 
 	// Colors to choose from
@@ -434,17 +475,17 @@ func (gs *GameScene) spawnEntities(count int) {
 		spawnPos := raylib.NewVector2(float32(raylib.GetRandomValue(0, int32(raylib.GetScreenWidth())-1)), float32(raylib.GetRandomValue(0, int32(raylib.GetScreenHeight())-1)))
 
 		// Create an entity with a Transform2D, Rigidbody and Color
-		entity := gs.ecsManager.CreateEntity()
+		entity := gs.manager.CreateEntity()
 
 		// Add a Transform2D component
-		gs.ecsManager.AddComponent(entity.ID, ecs.Transform2DComponent, &components.Transform2D{
+		gs.manager.AddComponent(entity.ID, ecs.Transform2DComponent, &components.Transform2D{
 			Position: spawnPos,
 			Rotation: 0,
 			Scale:    raylib.NewVector2(32, 32),
 		})
 
 		// Add a Rigidbody component
-		gs.ecsManager.AddComponent(entity.ID, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
+		gs.manager.AddComponent(entity.ID, ecs.RigidBodyComponent, &physicscomponents.RigidBody{
 			Mass:         1.0,
 			Velocity:     raylib.NewVector2(0, 0),
 			Acceleration: raylib.NewVector2(0, 0),
@@ -456,13 +497,12 @@ func (gs *GameScene) spawnEntities(count int) {
 		})
 
 		// Add a BoxCollider component
-		gs.ecsManager.AddComponent(entity.ID, ecs.BoxColliderComponent, &physicscomponents.BoxCollider{
+		gs.manager.AddComponent(entity.ID, ecs.BoxColliderComponent, &physicscomponents.BoxCollider{
 			Type: "Square",
 			Size: raylib.NewVector2(32, 32),
 		})
 
 		// Add a Color component
-		gs.ecsManager.AddComponent(entity.ID, ecs.ColorComponent, &components.Color{Color: color})
+		gs.manager.AddComponent(entity.ID, ecs.ColorComponent, &components.Color{Color: color})
 	}
-
 }

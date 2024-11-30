@@ -4,6 +4,7 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// GetColorFromString returns a raylib.Color from a string
 func GetColorFromString(cN string) raylib.Color {
 
 	switch cN {

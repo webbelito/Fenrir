@@ -8,26 +8,26 @@ import (
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// MovementSystem is a system that handles movement
 type MovementSystem struct {
-	ecsManager        *ecs.ECSManager
-	entitiesManager   *ecs.EntitiesManager
-	componentsManager *ecs.ComponentsManager
-	priority          int
+	manager  *ecs.Manager
+	priority int
 }
 
-func NewMovementSystem(ecsM *ecs.ECSManager, p int) *MovementSystem {
+// NewMovementSystem creates a new MovementSystem
+func NewMovementSystem(m *ecs.Manager, p int) *MovementSystem {
 	return &MovementSystem{
-		ecsManager:        ecsM,
-		entitiesManager:   ecsM.GetEntitiesManager(),
-		componentsManager: ecsM.GetComponentsManager(),
-		priority:          p,
+		manager:  m,
+		priority: p,
 	}
 }
 
+// Update updates the MovementSystem
 func (ms *MovementSystem) Update(dt float64) {
 
-	if ms.ecsManager == nil || ms.entitiesManager == nil || ms.componentsManager == nil {
-		utils.ErrorLogger.Println("MovementSystem: ECSManager or EntitiesManager or ComponentsManager is nil")
+	// Check if the ECS Manager is nil
+	if ms.manager == nil {
+		utils.ErrorLogger.Println("MovementSystem: ECS Manager is nil")
 		return
 	}
 
@@ -36,27 +36,70 @@ func (ms *MovementSystem) Update(dt float64) {
 
 }
 
+// MoveEntities moves entities
 func (ms *MovementSystem) MoveEntities(dt float64) {
 
-	// Get entities with a position, velocity, speed, component
-	transformComps, tCompsExist := ms.componentsManager.Components[ecs.Transform2DComponent]
-	veloComps, vCompsExists := ms.componentsManager.Components[ecs.VelocityComponent]
-	SpeedComps, sCompsExists := ms.componentsManager.Components[ecs.SpeedComponent]
-	PlayerComps := ms.componentsManager.Components[ecs.PlayerComponent]
+	entityIDs := ms.manager.GetEntitiesWithComponents([]ecs.ComponentType{
+		ecs.Transform2DComponent,
+		ecs.VelocityComponent,
+		ecs.SpeedComponent,
+	})
 
-	if !tCompsExist || !vCompsExists || !sCompsExists {
+	// If there are no entities with the required components, log error and return
+	if len(entityIDs) == 0 {
+		utils.ErrorLogger.Println("MovementSystem: No entities with required components found")
 		return
 	}
 
-	// Update the position of all entities with a position, velocity and speed component
-	for entity, vel := range veloComps {
-		transform, tExists := transformComps[entity].(*components.Transform2D)
-		velocity, vExists := vel.(*components.Velocity)
-		speed, sExists := SpeedComps[entity].(*components.Speed)
-		_, pExists := PlayerComps[entity].(*components.Player)
+	// Iterate over all entities with the required components
+	for _, eID := range entityIDs {
 
-		if !tExists || !vExists || !sExists {
-			continue
+		// Get the transform component
+		transformComp, exist := ms.manager.GetComponent(eID, ecs.Transform2DComponent)
+
+		if !exist {
+			utils.ErrorLogger.Println("MovementSystem: Transform2D component does not exist")
+			return
+		}
+
+		// Cast the transform component to the correct type
+		transform, ok := transformComp.(*components.Transform2D)
+
+		if !ok {
+			utils.ErrorLogger.Println("MovementSystem: Transform2D component could not be casted")
+			return
+		}
+
+		// Get the velocity component
+		velocityComp, exist := ms.manager.GetComponent(eID, ecs.VelocityComponent)
+
+		if !exist {
+			utils.ErrorLogger.Println("MovementSystem: Velocity component does not exist")
+			return
+		}
+
+		// Cast the velocity component to the correct type
+		velocity, ok := velocityComp.(*components.Velocity)
+
+		if !ok {
+			utils.ErrorLogger.Println("MovementSystem: Velocity component could not be casted")
+			return
+		}
+
+		// Get the speed component
+		speedComp, exist := ms.manager.GetComponent(eID, ecs.SpeedComponent)
+
+		if !exist {
+			utils.ErrorLogger.Println("MovementSystem: Speed component does not exist")
+			return
+		}
+
+		// Cast the speed component to the correct type
+		speed, ok := speedComp.(*components.Speed)
+
+		if !ok {
+			utils.ErrorLogger.Println("MovementSystem: Speed component could not be casted")
+			return
 		}
 
 		// Normalize the velocity vector to ensure consistent movement speed
@@ -64,20 +107,9 @@ func (ms *MovementSystem) MoveEntities(dt float64) {
 
 		// Calculate the new position based on the velocity and speed
 		deltaVelocity := raylib.Vector2Scale(normalizedVelocity, speed.Value*float32(dt))
+
+		// Update the position of the entity
 		transform.Position = raylib.Vector2Add(transform.Position, deltaVelocity)
-
-		// Clamp the player position to the screen bounds
-		if pExists {
-
-			// Define the screen bounds
-			screenWidth := float32(raylib.GetScreenWidth())
-			screenHeight := float32(raylib.GetScreenHeight())
-
-			// Clamp the position to the screen bounds
-			transform.Position.X = raylib.Clamp(transform.Position.X, 0, screenWidth-5)
-			transform.Position.Y = raylib.Clamp(transform.Position.Y, 0, screenHeight-5)
-
-		}
 	}
 }
 

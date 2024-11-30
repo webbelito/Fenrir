@@ -1,22 +1,17 @@
 package physicssystems
 
 import (
-	// STD
 	"math"
 	"sync"
 
-	// ECS
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
 
-	// UTILS
 	"github.com/webbelito/Fenrir/pkg/utils"
 
-	// PHYSICS
 	"github.com/webbelito/Fenrir/pkg/physics"
 	physicscomponents "github.com/webbelito/Fenrir/pkg/physics/components"
 
-	// RAYLIB
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
@@ -28,40 +23,40 @@ const (
 	PercentCorrection = 0.8  // Percentage of penetration to correct
 )
 
+// CollisionSystem is a system that handles collision detection and resolution
 type CollisionSystem struct {
 	quadTree             *physics.QuadTree
 	csMutex              sync.RWMutex
 	ShouldRenderQuadTree bool
-	ecsManager           *ecs.ECSManager
-	entitesManager       *ecs.EntitiesManager
-	componentsManager    *ecs.ComponentsManager
+	manager              *ecs.Manager
 	priority             int
 }
 
-func NewCollisionSystem(ecsM *ecs.ECSManager, b physics.Rectangle, c int32, mD int32, cD int32, p int) *CollisionSystem {
+// NewCollisionSystem creates a new CollisionSystem
+func NewCollisionSystem(m *ecs.Manager, b physics.Rectangle, c int32, mD int32, cD int32, p int) *CollisionSystem {
 	return &CollisionSystem{
 		quadTree:             physics.NewQuadTree(b, c, mD, cD),
 		ShouldRenderQuadTree: false,
-		ecsManager:           ecsM,
-		entitesManager:       ecsM.GetEntitiesManager(),
-		componentsManager:    ecsM.GetComponentsManager(),
+		manager:              m,
 		priority:             p,
 	}
 }
 
 func (cs *CollisionSystem) Update(dt float64) {
 
-	if cs.ecsManager == nil || cs.entitesManager == nil || cs.componentsManager == nil {
-		utils.ErrorLogger.Println("CollisionSystem: EntitiesManager or ComponentsManager is nil")
+	if cs.manager == nil {
+		utils.ErrorLogger.Println("ECS Manager is nil")
 		return
 	}
 
 	// Define the boundry of the QuadTree based on screen size or game world
 	// TODO: Implement a game world size for this
 
+	// Get the screen width and height
 	screenWidth := float32(raylib.GetScreenWidth())
 	screenHeight := float32(raylib.GetScreenHeight())
 
+	// Define the boundry of the QuadTree
 	boundry := physics.Rectangle{
 		Position: raylib.NewVector2(0, 0),
 		Width:    screenWidth,
@@ -75,27 +70,35 @@ func (cs *CollisionSystem) Update(dt float64) {
 	cs.csMutex.Unlock()
 
 	// Retrieve entities with the required components
-	entities := cs.componentsManager.GetEntitiesWithComponents([]ecs.ComponentType{
+	entities := cs.manager.GetEntitiesWithComponents([]ecs.ComponentType{
 		ecs.Transform2DComponent,
 		ecs.BoxColliderComponent,
 	})
 
 	// Insert entities into the QuadTree
-	for _, entity := range entities {
-		transformComp, transCompExists := cs.componentsManager.GetComponent(entity, ecs.Transform2DComponent)
-		if !transCompExists {
+	for _, eID := range entities {
+
+		// Get the Transform2D component
+		transformComp, exist := cs.manager.GetComponent(eID, ecs.Transform2DComponent)
+
+		// Check if the Transform2D component exists
+		if !exist {
+			utils.ErrorLogger.Println("Transform2D component does not exist")
 			continue
 		}
 
-		transform, transExists := transformComp.(*components.Transform2D)
+		// Cast the component to a Transform2D
+		transform, ok := transformComp.(*components.Transform2D)
 
-		if !transExists {
+		// Check if the cast was successful
+		if !ok {
+			utils.ErrorLogger.Println("Failed to cast Transform2D component to Transform2D")
 			continue
 		}
 
 		// Insert entity into the QuadTree based on its position
 		cs.csMutex.Lock()
-		cs.quadTree.Insert(entity, transform.Position)
+		cs.quadTree.Insert(eID, transform.Position)
 		cs.csMutex.Unlock()
 
 	}
@@ -104,26 +107,32 @@ func (cs *CollisionSystem) Update(dt float64) {
 	for _, eID := range entities {
 
 		// Get Transform2D component
-		transformComp, transCompExists := cs.componentsManager.GetComponent(eID, ecs.Transform2DComponent)
-		if !transCompExists {
+		transformComp, exist := cs.manager.GetComponent(eID, ecs.Transform2DComponent)
+		if !exist {
+			utils.ErrorLogger.Println("Transform2D component does not exist")
 			continue
 		}
 
-		// Get the reference to the Transform2D component
-		transform, transExists := transformComp.(*components.Transform2D)
-		if !transExists {
+		// Cast the Transform2D component to Transform2D
+		transform, ok := transformComp.(*components.Transform2D)
+
+		// Check if the cast was successful
+		if !ok {
+			utils.ErrorLogger.Println("Failed to cast Transform2D component to Transform2D")
 			continue
 		}
 
 		// Get the BoxCollider component
-		colliderComp, colliderCompExists := cs.componentsManager.GetComponent(eID, ecs.BoxColliderComponent)
-		if !colliderCompExists {
+		colliderComp, exist := cs.manager.GetComponent(eID, ecs.BoxColliderComponent)
+		if !exist {
+			utils.ErrorLogger.Println("BoxCollider component does not exist")
 			continue
 		}
 
-		// Get the reference to the BoxCollider component
-		collider, colliderExists := colliderComp.(*physicscomponents.BoxCollider)
-		if !colliderExists {
+		// Cast the BoxCollider component to BoxCollider
+		collider, ok := colliderComp.(*physicscomponents.BoxCollider)
+		if !ok {
+			utils.ErrorLogger.Println("Failed to cast BoxCollider component to BoxCollider")
 			continue
 		}
 
@@ -145,8 +154,10 @@ func (cs *CollisionSystem) Update(dt float64) {
 
 		// Check for actiual collisions with the found entities
 		for _, otherID := range found {
+
+			// Ignore self
 			if otherID == eID {
-				continue // Ignore self
+				continue
 			}
 
 			// Check for Box to Box collision
@@ -167,10 +178,19 @@ func (cs *CollisionSystem) Update(dt float64) {
 }
 
 func (cs *CollisionSystem) Render() {
+
+	// Check if the ECS Manager is nil
+	if cs.manager == nil {
+		utils.ErrorLogger.Println("ECS Manager is nil")
+		return
+	}
+
+	// Check if the QuadTree should be rendered
 	if !cs.ShouldRenderQuadTree {
 		return
 	}
 
+	// Lock the QuadTree for reading
 	cs.csMutex.RLock()
 	defer cs.csMutex.RUnlock()
 
@@ -178,8 +198,10 @@ func (cs *CollisionSystem) Render() {
 	cs.drawQuadTreeNode(cs.quadTree, cs.quadTree.CurrentDepth, raylib.Green)
 }
 
+// drawQuadTreeNode recursively draws the QuadTree nodes
 func (cs *CollisionSystem) drawQuadTreeNode(qt *physics.QuadTree, cD int32, bC raylib.Color) {
 
+	// Check if the QuadTree node is nil
 	if qt == nil {
 		return
 	}
@@ -202,25 +224,27 @@ func (cs *CollisionSystem) drawQuadTreeNode(qt *physics.QuadTree, cD int32, bC r
 	}
 }
 
+// ToggleQuadTreeRender toggles the rendering of the QuadTree
 func (cs *CollisionSystem) ToggleQuadTreeRender() {
 	cs.ShouldRenderQuadTree = !cs.ShouldRenderQuadTree
 }
 
+// handleBoxToBoxCollision handles collision between two entities with BoxCollider components
 func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, eB uint64) {
 
 	// Get the components for entity A
-	transformA, transformAExists := cs.componentsManager.GetComponent(eA, ecs.Transform2DComponent)
-	colliderA, colliderAExists := cs.componentsManager.GetComponent(eA, ecs.BoxColliderComponent)
-	rigidBodyA, rigidbodyAExists := cs.componentsManager.GetComponent(eA, ecs.RigidBodyComponent)
+	transformA, transformAExists := cs.manager.GetComponent(eA, ecs.Transform2DComponent)
+	colliderA, colliderAExists := cs.manager.GetComponent(eA, ecs.BoxColliderComponent)
+	rigidBodyA, rigidbodyAExists := cs.manager.GetComponent(eA, ecs.RigidBodyComponent)
 
 	if !transformAExists || !colliderAExists || !rigidbodyAExists {
 		return
 	}
 
 	// Get the components for entity B
-	transformB, transformBExists := cs.componentsManager.GetComponent(eB, ecs.Transform2DComponent)
-	colliderB, colliderBExists := cs.componentsManager.GetComponent(eB, ecs.BoxColliderComponent)
-	rigidBodyB, rigidBodyBExists := cs.componentsManager.GetComponent(eB, ecs.RigidBodyComponent)
+	transformB, transformBExists := cs.manager.GetComponent(eB, ecs.Transform2DComponent)
+	colliderB, colliderBExists := cs.manager.GetComponent(eB, ecs.BoxColliderComponent)
+	rigidBodyB, rigidBodyBExists := cs.manager.GetComponent(eB, ecs.RigidBodyComponent)
 
 	if !transformBExists || !colliderBExists || !rigidBodyBExists {
 		return
@@ -333,5 +357,3 @@ func (cs *CollisionSystem) handleBoxToBoxCollision(eA uint64, eB uint64) {
 func (cs *CollisionSystem) GetPriority() int {
 	return cs.priority
 }
-
-// TODO: Implement a Destroy Entity

@@ -5,23 +5,21 @@ import (
 
 	"github.com/webbelito/Fenrir/pkg/components"
 	"github.com/webbelito/Fenrir/pkg/ecs"
-	"github.com/webbelito/Fenrir/pkg/resources"
 	"github.com/webbelito/Fenrir/pkg/utils"
 
 	raylib "github.com/gen2brain/raylib-go/raylib"
 )
 
+// RenderSystem is a system that renders entities
 type RenderSystem struct {
 	ScreenCullingRect raylib.Rectangle
 	Entities          []EntityData
-	ecsManager        *ecs.ECSManager
-	entitiesManager   *ecs.EntitiesManager
-	componentsManager *ecs.ComponentsManager
-	resourcesManager  *resources.ResourcesManager
+	manager           *ecs.Manager
 	cameraSystem      *CameraSystem
 	priority          int
 }
 
+// EntityData holds data for rendering an entity
 type EntityData struct {
 	ID       uint64
 	Position raylib.Vector2
@@ -31,113 +29,138 @@ type EntityData struct {
 	Sprite   *components.Sprite
 }
 
-func NewRenderSystem(ecsM *ecs.ECSManager, screenBounds raylib.Rectangle, rm *resources.ResourcesManager, p int) *RenderSystem {
+// NewRenderSystem creates a new RenderSystem
+func NewRenderSystem(m *ecs.Manager, screenBounds raylib.Rectangle, p int) *RenderSystem {
 	return &RenderSystem{
 		ScreenCullingRect: screenBounds,
 		Entities:          []EntityData{},
-		ecsManager:        ecsM,
-		entitiesManager:   ecsM.GetEntitiesManager(),
-		componentsManager: ecsM.GetComponentsManager(),
-		resourcesManager:  rm,
+		manager:           m,
 		priority:          p,
 	}
 }
 
 func (rs *RenderSystem) Render() {
-	if rs.ecsManager == nil || rs.entitiesManager == nil || rs.componentsManager == nil || rs.resourcesManager == nil {
-		utils.ErrorLogger.Println("RenderSystem: ECSManager or EntitiesManager or ComponentsManager or ResourcesManager is nil")
+
+	// Check if the ECS Manager is nil
+	if rs.manager == nil {
+		utils.ErrorLogger.Println("ECS Manager is nil")
 		return
 	}
 
+	// Render entities
 	rs.RenderEntities()
 
 }
 
 func (rs *RenderSystem) RenderEntities() {
+	// Retrieve cameraComp from Manager
+	// TODO We are assuming that the camera is the first entity
+	cameraComp, exist := rs.manager.GetComponent(0, ecs.CameraComponent)
 
-	camera := rs.cameraSystem.GetCamera()
+	// Check if the camera exists
+	if !exist {
+		utils.ErrorLogger.Println("RenderSystem: Camera not found")
+		return
+	}
 
+	// Cast the camera component to a Camera component
+	camera, ok := cameraComp.(*components.Camera)
+
+	// Check if the cast was successful
+	if !ok {
+		utils.ErrorLogger.Println("RenderSystem: Invalid Camera component")
+		return
+	}
+
+	// Create a Camera2D object
 	cam := raylib.Camera2D{
-		Offset:   rs.cameraSystem.camera.Offset,
-		Target:   rs.cameraSystem.camera.Target,
+		Offset:   camera.Offset,
+		Target:   camera.Target,
 		Rotation: 0,
 		Zoom:     camera.Zoom,
 	}
 
+	// Begin 2D mode with the camera
 	raylib.BeginMode2D(cam)
 
-	transformComps, transformCompsExists := rs.componentsManager.Components[ecs.Transform2DComponent]
-	colorComps, colorCompsExists := rs.componentsManager.Components[ecs.ColorComponent]
-	spriteComps := rs.componentsManager.Components[ecs.SpriteComponent]
-
-	if !transformCompsExists || !colorCompsExists {
-		return
-	}
-
-	// Clear the entities slice while retaining capacity
-	rs.Entities = rs.Entities[:0]
-
-	// Collect entities that have Position , Color and Sprite components
-	entities := rs.componentsManager.GetEntitiesWithComponents([]ecs.ComponentType{
+	// Retrieve entities with Transform2D and Color components
+	entityIDs := rs.manager.GetEntitiesWithComponents([]ecs.ComponentType{
 		ecs.Transform2DComponent,
 		ecs.ColorComponent,
 	})
 
-	for _, entity := range entities {
-		transform, _ := transformComps[entity].(*components.Transform2D)
-		colorComp, _ := colorComps[entity].(*components.Color)
+	// Temporary slice to hold entities for rendering
+	var entities []EntityData
 
-		// Check if the entity has a Sprite component
-		spriteComp, spriteExists := spriteComps[entity].(*components.Sprite)
+	for _, eID := range entityIDs {
+		// Retrieve Transform2D component
+		transformComp, exists := rs.manager.GetComponent(eID, ecs.Transform2DComponent)
+		if !exists {
+			continue
+		}
+		transform, ok := transformComp.(*components.Transform2D)
+		if !ok {
+			utils.ErrorLogger.Printf("RenderSystem: Entity %d has invalid Transform2D component\n", eID)
+			continue
+		}
 
 		// Check if the entity is within the screen bounds
 		if !raylib.CheckCollisionPointRec(transform.Position, rs.ScreenCullingRect) {
 			continue
 		}
 
-		// Add the entity to the slice if it does not have a sprite component
-		if !spriteExists {
-			rs.Entities = append(rs.Entities, EntityData{
-				ID:       entity,
-				Position: transform.Position,
-				Rotation: transform.Rotation,
-				Scale:    transform.Scale,
-				Color:    colorComp.Color,
-				Sprite:   nil,
-			})
+		// Retrieve Color component
+		colorComp, exists := rs.manager.GetComponent(eID, ecs.ColorComponent)
+		if !exists {
+			continue
+		}
+		color, ok := colorComp.(*components.Color)
+		if !ok {
+			utils.ErrorLogger.Printf("RenderSystem: Entity %d has invalid Color component\n", eID)
+			continue
 		}
 
-		// Add the entity to the slice
-		rs.Entities = append(rs.Entities, EntityData{
-			ID:       entity,
+		// Retrieve Sprite component, if any
+		spriteComp, spriteExists := rs.manager.GetComponent(eID, ecs.SpriteComponent)
+		var sprite *components.Sprite
+		if spriteExists {
+			sprite, ok = spriteComp.(*components.Sprite)
+			if !ok {
+				utils.ErrorLogger.Printf("RenderSystem: Entity %d has invalid Sprite component\n", eID)
+				continue
+			}
+		}
+
+		// Append entity data for rendering
+		entities = append(entities, EntityData{
+			ID:       eID,
 			Position: transform.Position,
 			Rotation: transform.Rotation,
 			Scale:    transform.Scale,
-			Color:    colorComp.Color,
-			Sprite:   spriteComp,
+			Color:    color.Color,
+			Sprite:   sprite,
 		})
 	}
 
 	// Sort entities by ID to ensure consistent rendering order
-	sort.SliceStable(rs.Entities, func(i int, j int) bool {
-		return rs.Entities[i].ID < rs.Entities[j].ID
+	sort.SliceStable(entities, func(i, j int) bool {
+		return entities[i].ID < entities[j].ID
 	})
 
 	// Render entities
-	for _, entity := range rs.Entities {
+	for _, entity := range entities {
 		if entity.Sprite == nil {
-			// Fallback to rendering a rectangle if the sprite is nil
+			// Render a rectangle if the sprite is nil
 			raylib.DrawRectangleV(entity.Position, entity.Scale, entity.Color)
 			continue
 		}
 
 		// Retrieve the texture from the Resources Manager
-		texture, texExists := rs.resourcesManager.GetTexture(entity.Sprite.TexturePath)
-
+		texture, texExists := rs.manager.GetTexture(entity.Sprite.TexturePath)
 		if !texExists {
-
 			// Attempt to load the texture if not already loaded
-			_, err := rs.resourcesManager.LoadTexture(entity.Sprite.TexturePath)
+			var err error
+			texture, err = rs.manager.LoadTexture(entity.Sprite.TexturePath)
 			if err != nil {
 				utils.ErrorLogger.Printf("RenderSystem: Failed to load texture: %s\n", entity.Sprite.TexturePath)
 				continue
@@ -164,13 +187,20 @@ func (rs *RenderSystem) RenderEntities() {
 		)
 	}
 
+	// End 2D mode
 	raylib.EndMode2D()
 }
 
+/*
+GetPriority returns the priority of the system
+*/
 func (rs *RenderSystem) GetPriority() int {
 	return rs.priority
 }
 
+/*
+SetCameraSystem sets the CameraSystem for the RenderSystem
+*/
 func (rs *RenderSystem) SetCameraSystem(cs *CameraSystem) {
 	rs.cameraSystem = cs
 }
