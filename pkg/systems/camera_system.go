@@ -17,17 +17,28 @@ type CameraSystem struct {
 
 // NewCameraSystem creates a new CameraSystem
 func NewCameraSystem(m *ecs.Manager, p int) *CameraSystem {
-	return &CameraSystem{
+	cs := &CameraSystem{
 		manager:  m,
 		priority: p,
 	}
+
+	return cs
+
 }
 
 func (cs *CameraSystem) Update(dt float64) {
 
-	// If the camera's owner entity is 0, return
-	if cs.camera.OwnerEntity == 0 {
-		utils.ErrorLogger.Println("CameraSystem: Camera owner entity is 0")
+	cameraComp, exist := cs.manager.GetCamera()
+
+	if !exist {
+		utils.ErrorLogger.Println("CameraSystem: Camera component does not exist")
+		return
+	}
+
+	cs.camera = cameraComp
+
+	if cs.camera == nil {
+		utils.ErrorLogger.Println("CameraSystem: Camera component is nil")
 		return
 	}
 

@@ -10,9 +10,8 @@ import (
 
 // UISystem is a system that renders UI components
 type UISystem struct {
-	manager       *ecs.Manager
-	eventsManager *events.EventsManager
-	priority      int
+	manager  *ecs.Manager
+	priority int
 }
 
 // NewUISystem creates a new UISystem
@@ -124,7 +123,7 @@ func (us *UISystem) renderUIButtons() {
 		if raygui.Button(button.Bounds, button.Text) {
 
 			// If the button is clicked, call the OnClick function
-			button.OnClick(us.eventsManager)
+			us.manager.DispatchEvent("button_clicked", events.ButtonClickEvent{ButtonText: button.Text})
 		}
 	}
 }

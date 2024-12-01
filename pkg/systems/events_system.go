@@ -7,9 +7,8 @@ import (
 
 // EventsListenerSystem is a system that listens for events
 type EventsListenerSystem struct {
-	manager       *ecs.Manager
-	eventsManager *events.EventsManager
-	priority      int
+	manager  *ecs.Manager
+	priority int
 }
 
 // NewEventsListenerSystem creates a new EventsListenerSystem
@@ -20,7 +19,7 @@ func NewEventsListenerSystem(m *ecs.Manager, p int) *EventsListenerSystem {
 	}
 
 	// Subscribe to button clicked events
-	els.eventsManager.Subscribe("button_clicked", els.OnButtonClick)
+	els.manager.SubscribeEvent("button_clicked", els.OnButtonClick)
 
 	return els
 }

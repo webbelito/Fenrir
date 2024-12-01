@@ -49,7 +49,7 @@ func NewGameScene(sm *SceneManager, m *ecs.Manager, sd *SceneData) *GameScene {
 func (gs *GameScene) Initialize() {
 
 	// * Editor Init
-	editorManager := editor.NewEditorManager(gs.manager, 1)
+	editorManager := editor.NewEditorManager(gs.manager, 10)
 
 	// * Resource Manager Init
 
@@ -60,14 +60,14 @@ func (gs *GameScene) Initialize() {
 	inputSystem := systems.NewInputSystem(
 		gs.manager,
 		editorManager,
-		2,
+		11,
 	)
 
 	gs.manager.RegisterSystem(inputSystem, inputSystem.GetPriority())
 
 	// * Movement System Init
 
-	movementSystem := systems.NewMovementSystem(gs.manager, 3)
+	movementSystem := systems.NewMovementSystem(gs.manager, 12)
 	gs.manager.RegisterSystem(movementSystem, movementSystem.GetPriority())
 
 	// Add more systems as needed...
@@ -78,7 +78,7 @@ func (gs *GameScene) Initialize() {
 	gravity := raylib.NewVector2(0, 980)
 
 	// Initialize the RigidBodySystem
-	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.manager, gravity, 4)
+	rigidBodySystem := physicssystems.NewRigidBodySystem(gs.manager, gravity, 13)
 	gs.manager.RegisterSystem(rigidBodySystem, rigidBodySystem.GetPriority())
 
 	// * Collision System Init
@@ -95,7 +95,7 @@ func (gs *GameScene) Initialize() {
 	maxDepth := int32(5)
 	capacityDepth := int32(0)
 
-	collisionSystem := physicssystems.NewCollisionSystem(gs.manager, quadBoundary, csCapacity, maxDepth, capacityDepth, 5)
+	collisionSystem := physicssystems.NewCollisionSystem(gs.manager, quadBoundary, csCapacity, maxDepth, capacityDepth, 14)
 	gs.manager.RegisterSystem(collisionSystem, collisionSystem.GetPriority())
 
 	// * Render Init
@@ -108,7 +108,7 @@ func (gs *GameScene) Initialize() {
 		Height: float32(raylib.GetScreenHeight()),
 	}
 
-	renderSystem := systems.NewRenderSystem(gs.manager, screenBoundry, 0)
+	renderSystem := systems.NewRenderSystem(gs.manager, screenBoundry, 15)
 	gs.manager.RegisterSystem(renderSystem, renderSystem.GetPriority())
 
 	// * Editor Systems
@@ -119,27 +119,19 @@ func (gs *GameScene) Initialize() {
 	// * Particle System
 
 	// Initialize the Particle System
-	particleSystem := systems.NewParticleSystem(gs.manager, 6)
+	particleSystem := systems.NewParticleSystem(gs.manager, 16)
 	gs.manager.RegisterSystem(particleSystem, particleSystem.GetPriority())
 
 	// * Particle Render System
-	particleRenderSystem := systems.NewParticleRenderSystem(gs.manager, 2)
+	particleRenderSystem := systems.NewParticleRenderSystem(gs.manager, 17)
 	gs.manager.RegisterSystem(particleRenderSystem, particleRenderSystem.GetPriority())
 
 	// * Animation System
-	animationSystem := systems.NewAnimationSystem(gs.manager, 7)
+	animationSystem := systems.NewAnimationSystem(gs.manager, 18)
 	gs.manager.RegisterSystem(animationSystem, animationSystem.GetPriority())
 
-	// * Camera System
-	// TODO: Move this to a persistent system
-	cameraSystem := systems.NewCameraSystem(gs.manager, 8)
-	gs.manager.RegisterSystem(cameraSystem, cameraSystem.GetPriority())
-
-	// Assign the camera system to the Render System
-	renderSystem.SetCameraSystem(cameraSystem)
-
 	// * Audio System
-	audioSystem := systems.NewAudioSystem(gs.manager, 9)
+	audioSystem := systems.NewAudioSystem(gs.manager, 19)
 	gs.manager.RegisterSystem(audioSystem, audioSystem.GetPriority())
 
 	// Initialize Entities based on Scene Data
@@ -151,8 +143,6 @@ func (gs *GameScene) Initialize() {
 	// Spawn 100 entities with random positions and colors
 	gs.spawnEntities(25)
 
-	// Assign the player entity as the camera's owner
-	cameraSystem.SetOwner(gs.playerEntity.ID)
 }
 
 func (gs *GameScene) Update(dt float64) {

@@ -31,7 +31,7 @@ func main() {
 	// Initialize ECS Manager
 	ecsManager := ecs.NewManager()
 
-	// * Create the first entity (Camera)
+	// Camera Component
 	cameraEntity := ecsManager.CreateEntity()
 	ecsManager.AddComponent(cameraEntity.ID, ecs.CameraComponent, &components.Camera{
 		OwnerEntity: cameraEntity.ID,
@@ -88,9 +88,7 @@ func main() {
 		raylib.BeginDrawing()
 		raylib.ClearBackground(raylib.Black)
 
-		if currentScene != nil {
-			currentScene.Render()
-		}
+		ecsManager.Render()
 
 		raylib.EndDrawing()
 

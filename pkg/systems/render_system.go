@@ -53,9 +53,8 @@ func (rs *RenderSystem) Render() {
 }
 
 func (rs *RenderSystem) RenderEntities() {
-	// Retrieve cameraComp from Manager
-	// TODO We are assuming that the camera is the first entity
-	cameraComp, exist := rs.manager.GetComponent(0, ecs.CameraComponent)
+
+	cameraComp, exist := rs.manager.GetCamera()
 
 	// Check if the camera exists
 	if !exist {
@@ -63,21 +62,12 @@ func (rs *RenderSystem) RenderEntities() {
 		return
 	}
 
-	// Cast the camera component to a Camera component
-	camera, ok := cameraComp.(*components.Camera)
-
-	// Check if the cast was successful
-	if !ok {
-		utils.ErrorLogger.Println("RenderSystem: Invalid Camera component")
-		return
-	}
-
 	// Create a Camera2D object
 	cam := raylib.Camera2D{
-		Offset:   camera.Offset,
-		Target:   camera.Target,
+		Offset:   cameraComp.Offset,
+		Target:   cameraComp.Target,
 		Rotation: 0,
-		Zoom:     camera.Zoom,
+		Zoom:     cameraComp.Zoom,
 	}
 
 	// Begin 2D mode with the camera

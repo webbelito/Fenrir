@@ -14,5 +14,5 @@ type UIButton struct {
 
 // OnClick is a method that dispatches a button click event
 func (b *UIButton) OnClick(em *events.EventsManager) {
-	em.Dispatch("button_clicked", events.ButtonClickEvent{ButtonText: b.Text})
+	em.Dispatch("button_clickevent", events.ButtonClickEvent{ButtonText: b.Text})
 }

@@ -53,7 +53,7 @@ func (m *Manager) CreateEntity() *Entity {
 func (m *Manager) DestroyEntity(eID uint64) {
 	m.entities.DestroyEntity(eID)
 	m.components.DestroyEntityComponents(eID)
-	m.uiComponents.DestroyEntityComponents(eID)
+	m.uiComponents.DestroyUIEntityComponents(eID)
 }
 
 // GetAllEntities returns all entities
@@ -98,42 +98,49 @@ func (m *Manager) RemoveComponent(eID uint64, ct ComponentType) {
 	m.components.RemoveComponent(eID, ct)
 }
 
-// GetCamera retrieves the Camera component.
+// GetCamera retrieves the first Camera component found.
 func (m *Manager) GetCamera() (*components.Camera, bool) {
-	cameraComp, exists := m.GetComponent(0, CameraComponent) // Assuming entity ID 0 is the camera
-	if !exists {
-		return nil, false
+
+	entities := m.GetEntitiesWithComponents([]ComponentType{ComponentType(CameraComponent)})
+
+	for _, entity := range entities {
+		cameraComp, exists := m.GetComponent(entity, CameraComponent)
+		if exists {
+			camera, ok := cameraComp.(*components.Camera)
+			if ok {
+				return camera, true
+			}
+		}
 	}
-	camera, ok := cameraComp.(*components.Camera)
-	return camera, ok
+	return nil, false
 }
 
 // * UI Components
 
 // GetUIComponent returns a UI component of a given type for an entity
 func (m *Manager) GetUIComponent(eID uint64, ct UIComponentType) (UIComponent, bool) {
-	return m.uiComponents.GetComponent(eID, ct)
+	return m.uiComponents.GetUIComponent(eID, ct)
 }
 
 // GetComponentsOfType retrieves all UI components of a specific type.
 // It returns a map of entity IDs to their components and a boolean indicating existence.
 func (m *Manager) GetUIComponentsOfType(ct UIComponentType) (map[uint64]UIComponent, bool) {
-	return m.uiComponents.GetComponentsOfType(ct)
+	return m.uiComponents.GetUIComponentsOfType(ct)
 }
 
 // GetUIEntitiesWithComponents retrieves all entity IDs that have all the specified UI component types.
 func (m *Manager) GetUIEntitiesWithComponents(cts []UIComponentType) []uint64 {
-	return m.uiComponents.GetEntitiesWithComponents(cts)
+	return m.uiComponents.GetUIEntitiesWithComponents(cts)
 }
 
 // AddUIComponent adds a UI component to an entity
 func (m *Manager) AddUIComponent(eID uint64, ct UIComponentType, c UIComponent) {
-	m.uiComponents.AddComponent(eID, ct, c)
+	m.uiComponents.AddUIComponent(eID, ct, c)
 }
 
 // RemoveUIComponent removes a UI component from an entity
 func (m *Manager) RemoveUIComponent(eID uint64, ct UIComponentType) {
-	m.uiComponents.RemoveComponent(eID, ct)
+	m.uiComponents.RemoveUIComponent(eID, ct)
 }
 
 // * Systems
